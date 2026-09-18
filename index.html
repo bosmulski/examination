@@ -1,0 +1,3915 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+      content="width=device-width, initial-scale=1">
+
+<link rel="manifest"
+      href="manifest.json">
+
+<meta name="theme-color"
+      content="#ffffff">
+
+<style>
+
+body {
+    font-family: Calibri, Arial, sans-serif;
+    max-width: 1000px;
+    margin: auto;
+    padding: 10px;
+    font-size: clamp(16px, 1.5vw, 18px);
+    line-height: 1.5;
+}
+
+.question {
+    border-bottom: 1px solid #cccccc;
+    padding: 20px;
+}
+
+h1 {
+    font-size: clamp(22px, 3vw, 30px);
+}
+
+h3 {
+    font-size: clamp(18px, 2vw, 20px);
+}
+
+textarea {
+    width: 100%;
+    min-height: 150px;
+    font-size: 18px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+input[type="checkbox"] {
+    transform: scale(2);
+    margin-right: 15px;
+}
+
+.toolbar {
+    position: sticky;
+    top: 0;
+    background: white;
+    padding: 10px;
+    border-bottom: 1px solid #cccccc;
+    z-index: 1000;
+}
+
+button {
+    padding: 8px;
+    font-size: 14px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+}
+
+#watchlistPanel {
+
+    background:#f5f5f5;
+    padding:15px;
+    margin-bottom:20px;
+    border:1px solid #cccccc;
+
+}
+
+#watchlistItems {
+
+    padding-left:20px;
+
+}
+
+#watchlistItems li {
+
+    cursor:pointer;
+    color:#0066cc;
+    margin-bottom:5px;
+
+}
+
+#watchlistItems li:hover {
+
+    text-decoration:underline;
+
+}
+
+@media (max-width:768px){
+
+    body{
+        font-size:18px;
+    }
+
+    h1{
+        font-size:1.7rem;
+    }
+
+    h3{
+        font-size:1.4rem;
+    }
+
+    textarea{
+        font-size:20px;
+        min-height:220px;
+    }
+
+    input[type="checkbox"]{
+        transform:scale(2.5);
+    }
+
+    button{
+        font-size:12px;
+    }
+
+}
+
+</style>
+
+<script>
+
+function refreshWatchlist(){
+
+    let list =
+        document.getElementById(
+            "watchlistItems"
+        );
+
+    if(!list){
+        return;
+    }
+
+    list.innerHTML = "";
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        let watch =
+            q.querySelector(
+                ".watchlist"
+            );
+
+        if(
+            watch &&
+            watch.checked
+        ){
+
+            let item =
+                document.createElement(
+                    "li"
+                );
+
+            item.innerText =
+                q.dataset.question;
+
+            item.onclick =
+                function(){
+
+                    q.scrollIntoView({
+                        behavior:"smooth",
+                        block:"start"
+                    });
+
+                };
+
+            list.appendChild(item);
+
+        }
+
+    });
+
+    let count =
+        document.getElementById(
+            "watchCount"
+        );
+
+    if(count){
+
+        count.innerText =
+            "⭐ " +
+            list.children.length +
+            " Watchlisted";
+
+    }
+
+}
+
+function saveProgress(){
+
+    let data = [];
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        data.push({
+
+            confess:
+                q.querySelector(".confess")
+                ?
+                q.querySelector(".confess")
+                 .checked
+                :
+                false,
+
+            watchlist:
+                q.querySelector(".watchlist")
+                ?
+                q.querySelector(".watchlist")
+                 .checked
+                :
+                false,
+
+            notes:
+                q.querySelector(
+                    "textarea"
+                ).value
+
+        });
+
+    });
+
+    localStorage.setItem(
+        "ExaminationOfConscience",
+        JSON.stringify(data)
+    );
+
+    refreshWatchlist();
+
+}
+
+function loadProgress(){
+
+    let saved =
+        localStorage.getItem(
+            "ExaminationOfConscience"
+        );
+
+    if(!saved){
+
+        refreshWatchlist();
+
+        return;
+    }
+
+    let data =
+        JSON.parse(saved);
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q,index){
+
+        if(data[index]){
+
+            if(
+               q.querySelector(".confess")
+            ){
+
+                q.querySelector(
+                    ".confess"
+                ).checked =
+                    data[index].confess;
+
+            }
+
+            if(
+               q.querySelector(".watchlist")
+            ){
+
+                q.querySelector(
+                    ".watchlist"
+                ).checked =
+                    data[index].watchlist;
+
+            }
+
+            q.querySelector(
+                "textarea"
+            ).value =
+                data[index].notes || "";
+
+        }
+
+    });
+
+    refreshWatchlist();
+
+}
+
+function startOver(){
+
+    if(
+        !confirm(
+          "Clear all notes and selections?"
+        )
+    ){
+        return;
+    }
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        if(q.querySelector(".confess")){
+
+            q.querySelector(".confess")
+             .checked = false;
+
+        }
+
+        if(q.querySelector(".watchlist")){
+
+            q.querySelector(".watchlist")
+             .checked = false;
+
+        }
+
+        q.querySelector(
+            "textarea"
+        ).value = "";
+
+    });
+
+    localStorage.removeItem(
+        "ExaminationOfConscience"
+    );
+
+    refreshWatchlist();
+
+}
+
+function generateSummary(){
+
+    let result = "";
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        let confess =
+            q.querySelector(
+                ".confess"
+            );
+
+        if(
+            confess &&
+            confess.checked
+        ){
+
+            result +=
+                q.dataset.question +
+                "\n";
+
+            let notes =
+                q.querySelector(
+                    "textarea"
+                ).value;
+
+            if(
+                notes.trim() !== ""
+            ){
+
+                result +=
+                    "Notes: " +
+                    notes +
+                    "\n";
+
+            }
+
+            result +=
+                "\n-------------------\n\n";
+        }
+
+    });
+
+    let blob =
+        new Blob(
+            [result],
+            {type:"text/plain"}
+        );
+
+    let a =
+        document.createElement(
+            "a"
+        );
+
+    a.href =
+        URL.createObjectURL(blob);
+
+    a.download =
+        "ConfessionSummary.txt";
+
+    a.click();
+}
+
+
+
+window.onload = function(){
+
+    loadProgress();
+
+    refreshWatchlist();
+
+};
+
+
+document.addEventListener(
+"change",
+saveProgress
+);
+
+document.addEventListener(
+"input",
+saveProgress
+);
+
+
+
+
+document.addEventListener(
+"change",
+function(e){
+
+    if(
+       e.target.classList.contains(
+       "watchlist"
+       )
+    ){
+
+       refreshWatchlist();
+    }
+
+});
+
+function showOnlyWatchlist(){
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        let watch =
+            q.querySelector(".watchlist");
+
+        if(
+            watch &&
+            watch.checked
+        ){
+            q.style.display = "block";
+        }
+        else{
+            q.style.display = "none";
+        }
+
+    });
+
+}
+
+function showAllQuestions(){
+
+    document
+    .querySelectorAll(".question")
+    .forEach(function(q){
+
+        q.style.display = "block";
+
+    });
+
+}
+
+if("serviceWorker" in navigator){
+
+    navigator.serviceWorker
+             .register("service-worker.js");
+
+}
+
+</script>
+
+</head>
+
+<body>
+
+<div class="toolbar">
+
+<button onclick="saveProgress()">
+Save Progress
+</button>
+
+<button onclick="showOnlyWatchlist()">
+⭐ Watchlist
+</button>
+
+<button onclick="showAllQuestions()">
+All Questions
+</button>
+
+<button onclick="generateSummary()">
+Summary
+</button>
+
+<button onclick="startOver()">
+Clear Data
+</button>
+
+<span id="watchCount">
+⭐ 0 Watchlisted
+</span>
+
+</div>
+
+<div id="watchlistPanel">
+
+<h2>
+⭐ Sin Watchlist
+</h2>
+
+<ul id="watchlistItems">
+
+</ul>
+
+</div>
+
+<div class="question" data-question="Reserved or harbored hatred for God?">
+
+<h1>Reserved or harbored hatred for God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions I.1: "Our hearts are restless until they rest in you."</p><p>Direct: Deuteronomy 6:4-5; Matthew 22:37-38; 1 John 4:20</p><p>Deuteronomy 6:4-5: "Hear, O Israel! The LORD is our God, the LORD alone! Therefore, you shall love the LORD, your God, with your whole heart, and with your whole being, and with your whole strength."</p><p>Matthew 22:37-38: "He said to him, 'You shall love the Lord, your God, with all your heart, with all your soul, and with all your mind. This is the greatest and the first commandment.'"</p><p>1 John 4:20: "If anyone says, 'I love God,' but hates his brother, he is a liar; for whoever does not love a brother whom he has seen cannot love God whom he has not seen."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Disobeyed the commandments of God or the Church?">
+
+<h1>Disobeyed the commandments of God or the Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions VIII.12: "Give me chastity and continence, but not yet."</p><p>Direct: John 14:15; 1 John 5:3; James 1:22</p><p>John 14:15: "If you love me, you will keep my commandments."</p><p>1 John 5:3: "For the love of God is this, that we keep his commandments. And his commandments are not burdensome."</p><p>James 1:22: "Be doers of the word and not hearers only, deluding yourselves."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Refused to accept what God has revealed as true, or what the Catholic Church proclaims for belief?">
+
+<h1>Refused to accept what God has revealed as true, or what the Catholic Church proclaims for belief?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions X.23: "Late have I loved you, Beauty ever ancient, ever new."</p><p>Direct: John 8:31-32; 1 Timothy 3:15; Romans 10:17</p><p>John 8:31-32: "Jesus then said to those Jews who believed in him, 'If you remain in my word, you will truly be my disciples, and you will know the truth, and the truth will set you free.'"</p><p>1 Timothy 3:15: "...the household of God, which is the church of the living God, the pillar and foundation of truth."</p><p>Romans 10:17: "Thus faith comes from what is heard, and what is heard comes through the word of Christ."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Denied the existence of God?">
+
+<h1>Denied the existence of God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae I, q.2, a.3: "The existence of God can be proved in five ways."</p><p>Direct: Psalm 14:1; Romans 1:19-20; Hebrews 11:6</p><p>Psalm 14:1: "The fool says in his heart, 'There is no God.' They are corrupt, doing abominable deeds; there is no one who does good."</p><p>Romans 1:19-20: "For what can be known about God is evident to them, because God made it evident to them. Ever since the creation of the world, his invisible attributes of eternal power and divinity have been able to be understood and perceived in what he has made."</p><p>Hebrews 11:6: "But without faith it is impossible to please him, for anyone who approaches God must believe that he exists and that he rewards those who seek him."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to nourish and protect my faith?">
+
+<h1>Neglected to nourish and protect my faith?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Peter, quoted by St. Augustine, Sermon 169: "Faith is to believe what you do not see."</p><p>Direct: Romans 10:17; 2 Timothy 1:13-14; Hebrews 10:23</p><p>Romans 10:17: "Thus faith comes from what is heard, and what is heard comes through the word of Christ."</p><p>2 Timothy 1:13-14: "Take as your norm the sound words that you heard from me, in the faith and love that are in Christ Jesus. Guard this rich trust with the help of the Holy Spirit that dwells within us."</p><p>Hebrews 10:23: "Let us hold unwaveringly to our confession that gives us hope, for he who made the promise is trustworthy."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to reject everything opposed to a sound faith?">
+
+<h1>Neglected to reject everything opposed to a sound faith?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ignatius of Loyola, Spiritual Exercises, Principle and Foundation: "Man is created to praise, reverence, and serve God."</p><p>Direct: 1 Thessalonians 5:21-22; 1 Peter 5:8-9; Ephesians 6:10-13</p><p>1 Thessalonians 5:21-22: "Test everything; retain what is good. Refrain from every kind of evil."</p><p>1 Peter 5:8-9: "Be sober and vigilant. Your opponent the devil is prowling around like a roaring lion looking for someone to devour. Resist him, steadfast in faith."</p><p>Ephesians 6:10-13: "Finally, draw your strength from the Lord and from his mighty power. Put on the armor of God so that you may be able to stand firm against the tactics of the devil. For our struggle is not with flesh and blood but with the principalities, with the powers, with the world rulers of this present darkness, with the evil spirits in the heavens. Therefore, put on the armor of God, that you may be able to resist on the evil day and, having done everything, to hold your ground."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Deliberately misled others about doctrine or the faith?">
+
+<h1>Deliberately misled others about doctrine or the faith?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, On Christian Doctrine IV.28: "The eloquence of wisdom is truth."</p><p>Direct: Matthew 18:6; Romans 16:17-18; James 3:1</p><p>Matthew 18:6: "Whoever causes one of these little ones who believe in me to sin, it would be better for him to have a great millstone hung around his neck and to be drowned in the depths of the sea."</p><p>Romans 16:17-18: "I urge you, brothers, to watch out for those who create dissensions and obstacles, in opposition to the teaching that you learned; avoid them. For such people do not serve our Lord Christ but their own appetites."</p><p>James 3:1: "Not many of you should become teachers, my brothers, for you realize that we will receive a stricter judgment."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Rejected the Catholic faith, joined another Christian denomination, or joined or practiced another religion?">
+
+<h1>Rejected the Catholic faith, joined another Christian denomination, or joined or practiced another religion?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Cyprian of Carthage, On the Unity of the Church 6: "He can no longer have God for his Father who has not the Church for his mother."</p><p>Related: Matthew 16:18-19; Ephesians 4:4-6; 1 Timothy 3:15</p><p>Matthew 16:18-19: "And so I say to you, you are Peter, and upon this rock I will build my church, and the gates of the netherworld shall not prevail against it. I will give you the keys to the kingdom of heaven. Whatever you bind on earth shall be bound in heaven; and whatever you loose on earth shall be loosed in heaven."</p><p>Ephesians 4:4-6: "One body and one Spirit, as you were also called to the one hope of your call; one Lord, one faith, one baptism; one God and Father of all, who is over all and through all and in all."</p><p>1 Timothy 3:15: "...you should know how to behave in the household of God, which is the church of the living God, the pillar and foundation of truth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Joined a group forbidden to Catholics, such as the Masons or communists?">
+
+<h1>Joined a group forbidden to Catholics, such as the Masons or communists?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Paul, quoted by St. Augustine, Sermon 96: "Bad company corrupts good morals."</p><p>Related: Exodus 23:2; 1 Corinthians 15:33; 2 Corinthians 6:14-18</p><p>Exodus 23:2: "You shall not follow the crowd in doing wrong."</p><p>1 Corinthians 15:33: "Do not be led astray: 'Bad company corrupts good morals.'"</p><p>2 Corinthians 6:14-18: "Do not be yoked with unbelievers. For what partnership do righteousness and lawlessness have? Or what fellowship does light have with darkness? What accord has Christ with Beliar? Or what has a believer in common with an unbeliever? What agreement has the temple of God with idols?"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Despaired about my salvation or the forgiveness of my sins?">
+
+<h1>Despaired about my salvation or the forgiveness of my sins?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Faustina, Diary 1486: "The greater the sinner, the greater the right he has to My mercy."</p><p>Direct: Psalm 130:7-8; Luke 15:11-32; 1 John 1:9</p><p>Psalm 130:7-8: "Let Israel hope in the LORD, for with the LORD is mercy, with him is plenteous redemption, and he will redeem Israel from all its sins."</p><p>Luke 15:11-32: "Jesus said, 'A man had two sons...' [Parable of the Prodigal Son: 'My son, you are here with me always; everything I have is yours. But now we must celebrate and rejoice, because your brother was dead and has come to life again; he was lost and has been found.']"</p><p>1 John 1:9: "If we acknowledge our sins, he is faithful and just and will forgive our sins and cleanse us from every wrongdoing."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Presumed God's mercy by committing a sin in expectation of forgiveness, or asking for forgiveness without interior conversion and practicing virtue?">
+
+<h1>Presumed God's mercy by committing a sin in expectation of forgiveness, or asking for forgiveness without interior conversion and practicing virtue?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Sermon 169: "God has promised forgiveness to your repentance, but He has not promised tomorrow to your delay."</p><p>Direct: Romans 6:1-2; Sirach 5:4-7; Luke 13:3</p><p>Romans 6:1-2: "What then shall we say? Shall we persist in sin that grace may abound? Of course not! How can we who died to sin yet live in it?"</p><p>Sirach 5:4-7: "Do not say: 'I have sinned, yet what has happened to me?' for the LORD is slow to anger. Do not be so confident of forgiveness that you add sin to sin. Do not say: 'His mercy is great; my many sins he will forgive.' For mercy and anger alike are with him; upon the wicked rests his wrath."</p><p>Luke 13:3: "No, I tell you; but unless you repent, you will all perish as they did."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Loved someone or something more than God, such as money, power, sex, or ambition?">
+
+<h1>Loved someone or something more than God, such as money, power, sex, or ambition?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions X.29: "He loves you too little who loves anything together with you."</p><p>Direct: Matthew 6:24; Matthew 22:37-38; 1 John 2:15-16</p><p>Matthew 6:24: "No one can serve two masters. He will either hate one and love the other, or be devoted to one and despise the other. You cannot serve God and mammon."</p><p>Matthew 22:37-38: "He said to him, 'You shall love the Lord, your God, with all your heart, with all your soul, and with all your mind. This is the greatest and the first commandment.'"</p><p>1 John 2:15-16: "Do not love the world or the things of the world. If anyone loves the world, the love of the Father is not in him. For all that is in the world, sensual lust, enticement for the eyes, and a pretentious life, is not from the Father but is from the world."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Let someone or something influence my choices more than God?">
+
+<h1>Let someone or something influence my choices more than God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ignatius of Loyola, Spiritual Exercises, Principle and Foundation: "We should use created things insofar as they help us toward our end."</p><p>Direct: Galatians 1:10; Acts 5:29; Matthew 10:37</p><p>Galatians 1:10: "Am I now currying favor with human beings or God? Or am I trying to please people? If I were still trying to please people, I would not be a slave of Christ."</p><p>Acts 5:29: "But Peter and the apostles said in reply, 'We must obey God rather than men.'"</p><p>Matthew 10:37: "Whoever loves father or mother more than me is not worthy of me, and whoever loves son or daughter more than me is not worthy of me."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Engaged in superstitious practices, including horoscopes or fortune tellers?">
+
+<h1>Engaged in superstitious practices, including horoscopes or fortune tellers?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. John of the Cross, Ascent of Mount Carmel II.21: "The desire to know things beyond faith is a lack of faith."</p><p>Direct: Deuteronomy 18:10-12; Isaiah 8:19; Acts 16:16-18</p><p>Deuteronomy 18:10-12: "Let there not be found among you anyone who causes their son or daughter to pass through the fire, or who practices divination or sorcery, interprets omens, engages in witchcraft, or casts spells, or who is a medium or spiritist or who consults the dead. Anyone who does these things is detestable to the LORD."</p><p>Isaiah 8:19: "And when they say to you, 'Inquire of the mediums and the necromancers who chirp and mutter,' should not a people inquire of their God? Should they inquire of the dead on behalf of the living?"</p><p>Acts 16:16-18: "As we were going to the place of prayer, we were met by a slave girl who had a oracular spirit and brought her owners a large profit by fortune-telling. Paul, much annoyed, turned and said to the spirit, 'I command you in the name of Jesus Christ to come out of her.' And it came out at that very hour."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been involved in the occult or occult practices, such as séances, Ouija boards, or worship of Satan?">
+
+<h1>Been involved in the occult or occult practices, such as séances, Ouija boards, or worship of Satan?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Teresa of Avila, Life 25.22: "I saw clearly that the Lord was with me."</p><p>Direct: Deuteronomy 18:10-12; 1 Corinthians 10:20-21; Ephesians 6:11-12</p><p>Deuteronomy 18:10-12: "Let there not be found among you anyone who practices divination, sorcery, witchcraft, or casts spells, or who is a medium or spiritist. Anyone who does these things is detestable to the LORD."</p><p>1 Corinthians 10:20-21: "No, I mean that what they sacrifice, they sacrifice to demons, not to God, and I do not want you to become participants with demons. You cannot drink the cup of the Lord and also the cup of demons."</p><p>Ephesians 6:11-12: "Put on the armor of God so that you may be able to stand firm against the tactics of the devil. For our struggle is not with flesh and blood but with the principalities, with the powers, with the world rulers of this present darkness."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Formally attempted to leave the Catholic Church?">
+
+<h1>Formally attempted to leave the Catholic Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. Cyprian of Carthage, On the Unity of the Church 4: "The Church is one."</p><p>Related: Matthew 16:18; John 10:16; Ephesians 4:4-6</p><p>Matthew 16:18: "And so I say to you, you are Peter, and upon this rock I will build my church, and the gates of the netherworld shall not prevail against it."</p><p>John 10:16: "I have other sheep that do not belong to this fold. These also I must lead, and they will hear my voice, and there will be one flock, one shepherd."</p><p>Ephesians 4:4-6: "One body and one Spirit, as you were also called to the one hope of your call; one Lord, one faith, one baptism; one God and Father of all."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Hidden a serious sin or told a lie in Confession?">
+
+<h1>Hidden a serious sin or told a lie in Confession?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> First Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Psalm 50: "Confess your sins, that you may be justified."</p><p>Direct: John 20:21-23; James 5:16; 1 John 1:9</p><p>John 20:21-23: "Jesus said to them again, 'Peace be with you. As the Father has sent me, so I send you.' And when he had said this, he breathed on them and said to them, 'Receive the Holy Spirit. Whose sins you forgive are forgiven them, and whose sins you retain are retained.'"</p><p>James 5:16: "Therefore, confess your sins to one another and pray for one another, that you may be healed. The fervent prayer of a righteous person is very powerful."</p><p>1 John 1:9: "If we acknowledge our sins, he is faithful and just and will forgive our sins and cleanse us from every wrongdoing."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Used the name of God in cursing or blasphemy?">
+
+<h1>Used the name of God in cursing or blasphemy?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Matthew 5: "Let your speech be seasoned with grace."</p><p>Direct: Exodus 20:7; Matthew 5:33-37; James 5:12</p><p>Exodus 20:7: "You shall not invoke the name of the LORD, your God, in vain. For the LORD will not leave unpunished anyone who invokes his name in vain."</p><p>Matthew 5:33-37: "Again you have heard that it was said to your ancestors, 'Do not take a false oath, but make good to the Lord all that you vow.' But I say to you, do not swear at all... Let your 'Yes' mean 'Yes,' and your 'No' mean 'No.' Anything more is from the evil one."</p><p>James 5:12: "But above all, my brothers, do not swear, either by heaven or by earth or with any other oath, but let your 'Yes' mean yes and your 'No' mean no, that you may not fall under condemnation."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to keep vows, promises, or resolutions that I have made to God?">
+
+<h1>Failed to keep vows, promises, or resolutions that I have made to God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Letter 127: "The promise is a debt."</p><p>Direct: Numbers 30:2; Ecclesiastes 5:3-5; Matthew 5:33-37</p><p>Numbers 30:2: "When a man makes a vow to the LORD or binds himself under oath to a pledge of abstinence, he shall not violate his word but must fulfill exactly what he has promised."</p><p>Ecclesiastes 5:3-5: "When you make a vow to God, do not delay in fulfilling it, for he takes no pleasure in fools. Fulfill what you vow. It is better not to vow than to vow and not fulfill it."</p><p>Matthew 5:33-37: "Do not take a false oath, but make good to the Lord all that you vow."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Spoken about the Faith, the Church, the saints, or sacred things with irreverence, hatred, or defiance?">
+
+<h1>Spoken about the Faith, the Church, the saints, or sacred things with irreverence, hatred, or defiance?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.26: "Never speak evil of anyone."</p><p>Direct: Titus 3:2; James 3:9-10; Ephesians 4:29</p><p>Titus 3:2: "...to slander no one, to be peaceable, considerate, exercising all graciousness toward everyone."</p><p>James 3:9-10: "With it we bless the Lord and Father, and with it we curse human beings who are made in the likeness of God. From the same mouth come blessing and cursing. This need not be so, my brothers."</p><p>Ephesians 4:29: "No foul language should come out of your mouths, but only such as is good for needed edification, that it may impart grace to those who hear."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Watched television or movies, or listened to music that treated God, the Church, the saints, or sacred things irreverently?">
+
+<h1>Watched television or movies, or listened to music that treated God, the Church, the saints, or sacred things irreverently?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Paul of the Cross: "The first rule for a good life is to avoid bad company."</p><p>Related: Psalm 101:3; Philippians 4:8; 1 Corinthians 15:33</p><p>Psalm 101:3: "I will not set before my eyes anything that is base. I hate the work of those who fall away; it shall not cling to me."</p><p>Philippians 4:8: "Finally, brothers, whatever is true, whatever is honorable, whatever is just, whatever is pure, whatever is lovely, whatever is gracious, if there is any excellence and if there is anything worthy of praise, think about these things."</p><p>1 Corinthians 15:33: "Do not be led astray: 'Bad company corrupts good morals.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Used vulgar, suggestive, or obscene speech?">
+
+<h1>Used vulgar, suggestive, or obscene speech?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Clement of Alexandria, Instructor II.7: "Speech is the expression of the mind."</p><p>Direct: Ephesians 4:29; Ephesians 5:3-4; Colossians 3:8</p><p>Ephesians 4:29: "No foul language should come out of your mouths, but only such as is good for needed edification, that it may impart grace to those who hear."</p><p>Ephesians 5:3-4: "Immorality or any impurity or greed must not even be mentioned among you, as is fitting among holy ones, no obscenity or silly or suggestive talk, which is out of place, but instead, thanksgiving."</p><p>Colossians 3:8: "But now you must put them all away: anger, fury, malice, slander, and obscene language out of your mouths."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Belittled others in my speech?">
+
+<h1>Belittled others in my speech?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Philip Neri: "Be humble and do not esteem yourself better than others."</p><p>Direct: Matthew 5:22; Philippians 2:3-4; James 3:5-10</p><p>Matthew 5:22: "But I say to you, whoever is angry with his brother will be liable to judgment, and whoever says to his brother, 'Raca,' will be answerable to the Sanhedrin, and whoever says, 'You fool,' will be liable to fiery Gehenna."</p><p>Philippians 2:3-4: "Do nothing out of selfishness or out of vainglory; rather, humbly regard others as more important than yourselves, each looking out not for his own interests, but also everyone for those of others."</p><p>James 3:5-10: "So also the tongue is a small member and yet has great pretensions... With it we bless the Lord and Father, and with it we curse human beings who are made in the likeness of God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Behaved disrespectfully in the church building, such as talking immoderately before, during, or after Holy Mass?">
+
+<h1>Behaved disrespectfully in the church building, such as talking immoderately before, during, or after Holy Mass?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Vianney: "When we are before the Blessed Sacrament, let us shut our eyes and open our hearts."</p><p>Direct: Ecclesiastes 5:1-2; Matthew 21:13; 1 Corinthians 14:40</p><p>Ecclesiastes 5:1-2: "Guard your step when you go to the house of God... Do not be rash with your mouth, and let not your heart be hasty to utter a word before God."</p><p>Matthew 21:13: "He said to them, 'It is written: My house shall be a house of prayer, but you are making it a den of thieves.'"</p><p>1 Corinthians 14:40: "But everything should be done decently and in order."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Misused places or things set apart for the worship of God?">
+
+<h1>Misused places or things set apart for the worship of God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Cyril of Jerusalem, Mystagogical Catechesis V: "Make your left hand a throne for your right."</p><p>Direct: Exodus 3:5; John 2:16-17; 1 Corinthians 3:16-17</p><p>Exodus 3:5: "God said: 'Do not come near! Remove the sandals from your feet, for the place where you stand is holy ground.'"</p><p>John 2:16-17: "And to those who sold doves he said, 'Take these out of here, and stop making my Father's house a marketplace.' His disciples recalled the words of scripture, 'Zeal for your house will consume me.'"</p><p>1 Corinthians 3:16-17: "Do you not know that you are the temple of God, and that the Spirit of God dwells in you? If anyone destroys God's temple, God will destroy that person; for the temple of God, which you are, is holy."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed perjury by breaking an oath or lying under oath?">
+
+<h1>Committed perjury by breaking an oath or lying under oath?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Against Lying 3: "A lie consists in speaking a falsehood with the will of deceiving."</p><p>Direct: Exodus 20:7; Matthew 5:33-37; Leviticus 19:12</p><p>Exodus 20:7: "You shall not invoke the name of the LORD, your God, in vain. For the LORD will not leave unpunished anyone who invokes his name in vain."</p><p>Matthew 5:33-37: "Again you have heard that it was said to your ancestors, 'Do not take a false oath, but make good to the Lord all that you vow.' But I say to you, do not swear at all."</p><p>Leviticus 19:12: "You shall not swear falsely by my name, profaning the name of your God. I am the LORD."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Blamed God for my failings?">
+
+<h1>Blamed God for my failings?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Second Commandment</p><p><b>Precept:</b> </p><p>Related: St. Catherine of Siena, Dialogue: "All the way to heaven is heaven."</p><p>Related: James 1:13-17; Romans 9:20; Proverbs 19:3</p><p>James 1:13-17: "No one experiencing temptation should say, 'I am being tempted by God'; for God cannot be tempted by evil, and he himself tempts no one."</p><p>Romans 9:20: "On the contrary, who are you, O man, to talk back to God? Will what is made say to its maker, 'Why have you made me like this?'"</p><p>Proverbs 19:3: "A man's own folly ruins his chances, but his heart frets against the LORD."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Missed Mass on Sunday or Holy Days through my own fault and without sufficient reason?">
+
+<h1>Missed Mass on Sunday or Holy Days through my own fault and without sufficient reason?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> First Precept: Attend Mass on Sundays and Holy Days of Obligation and rest from servile labor</p><p>Related: St. Justin Martyr, First Apology 67: Christians gather on Sunday for prayer and the Eucharist.</p><p>Direct: Exodus 20:8-11; Hebrews 10:24-25; Acts 20:7</p><p>Exodus 20:8-11: "Remember the sabbath day—keep it holy. Six days you may labor and do all your work, but the seventh day is a sabbath of the LORD, your God."</p><p>Hebrews 10:24-25: "We should consider how to rouse one another to love and good works. We should not stay away from our assembly, as is the custom of some, but encourage one another."</p><p>Acts 20:7: "On the first day of the week when we gathered to break bread, Paul spoke to them..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to set time aside each day for personal prayer to God?">
+
+<h1>Neglected to set time aside each day for personal prayer to God?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. Alphonsus Liguori: "He who prays is saved; he who does not pray is lost."</p><p>Direct: Matthew 6:6; Luke 18:1; 1 Thessalonians 5:17</p><p>Matthew 6:6: "But when you pray, go to your inner room, close the door, and pray to your Father in secret. And your Father who sees in secret will repay you."</p><p>Luke 18:1: "Then he told them a parable about the necessity for them to pray always without becoming weary."</p><p>1 Thessalonians 5:17: "Pray without ceasing."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed a sacrilege against the Blessed Sacrament, such as throwing Him away, bringing Him home, or treating Him carelessly?">
+
+<h1>Committed a sacrilege against the Blessed Sacrament, such as throwing Him away, bringing Him home, or treating Him carelessly?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. Justin Martyr, First Apology 66: the Eucharist is received as the flesh and blood of Jesus.</p><p>Direct: John 6:51-58; 1 Corinthians 11:27-29</p><p>John 6:51-58: "I am the living bread that came down from heaven; whoever eats this bread will live forever; and the bread that I will give is my flesh for the life of the world."</p><p>1 Corinthians 11:27-29: "Therefore whoever eats the bread or drinks the cup of the Lord unworthily will have to answer for the body and blood of the Lord. A person should examine himself, and so eat the bread and drink the cup."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Received any sacrament while in the state of mortal sin?">
+
+<h1>Received any sacrament while in the state of mortal sin?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae III, q.80: the Eucharist is to be received worthily.</p><p>Direct: 1 Corinthians 11:27-29; Matthew 5:23-24</p><p>1 Corinthians 11:27-29: "Therefore whoever eats the bread or drinks the cup of the Lord unworthily will have to answer for the body and blood of the Lord. A person should examine himself, and so eat the bread and drink the cup. For anyone who eats and drinks without discerning the body, eats and drinks judgment on himself."</p><p>Matthew 5:23-24: "Therefore, if you bring your gift to the altar, and there recall that your brother has anything against you, leave your gift there at the altar, go first and be reconciled with your brother, and then come and offer your gift."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Habitually come late to or leave early from Mass?">
+
+<h1>Habitually come late to or leave early from Mass?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Vianney: "The Mass is the sacrifice of Calvary."</p><p>Related: Hebrews 10:24-25; Acts 20:7; 1 Corinthians 11:20-26</p><p>Hebrews 10:24-25: "We should consider how to rouse one another to love and good works. We should not stay away from our assembly, as is the custom of some, but encourage one another."</p><p>Acts 20:7: "On the first day of the week when we gathered to break bread, Paul spoke to them..."</p><p>1 Corinthians 11:20-26: "When you meet in one place, then, it is not to eat the Lord's supper... For as often as you eat this bread and drink the cup, you proclaim the death of the Lord until he comes."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Shopped, labored, practiced sports, or conducted business unnecessarily on Sunday or other Holy Days of Obligation?">
+
+<h1>Shopped, labored, practiced sports, or conducted business unnecessarily on Sunday or other Holy Days of Obligation?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> First Precept: Attend Mass on Sundays and Holy Days of Obligation and rest from servile labor</p><p>Related: St. Gregory the Great, Homily 30 on the Gospels: Sunday is to be devoted to God.</p><p>Direct: Exodus 20:8-11; Mark 2:27-28</p><p>Exodus 20:8-11: "Remember the sabbath day—keep it holy. Six days you may labor and do all your work, but the seventh day is a sabbath of the LORD, your God. You shall not do any work in it."</p><p>Mark 2:27-28: "Then he said to them, 'The sabbath was made for man, not man for the sabbath. That is why the Son of Man is lord even of the sabbath.'"</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to attend to taking my children to Mass?">
+
+<h1>Failed to attend to taking my children to Mass?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> First Precept: Attend Mass on Sundays and Holy Days of Obligation and rest from servile labor</p><p>Related: St. John Chrysostom, Homily on Ephesians 21: "Make your home a church."</p><p>Related: Deuteronomy 6:6-7; Ephesians 6:4; Hebrews 10:25</p><p>Deuteronomy 6:6-7: "Take to heart these words which I command you today. Keep repeating them to your children. Recite them when you are at home and when you are away, when you lie down and when you get up."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>Hebrews 10:25: "We should not stay away from our assembly, as is the custom of some, but encourage one another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to provide proper instruction in the Faith to my children?">
+
+<h1>Failed to provide proper instruction in the Faith to my children?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: "The husband should take care of the spiritual education of his children."</p><p>Direct: Deuteronomy 6:6-7; Ephesians 6:4; 2 Timothy 1:5</p><p>Deuteronomy 6:6-7: "Take to heart these words which I command you today. Keep repeating them to your children."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>2 Timothy 1:5: "I am reminded of your sincere faith, a faith that dwelt first in your grandmother Lois and your mother Eunice and that I am confident dwells also in you."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Knowingly eaten meat on a forbidden day or failed to fast on a fast day?">
+
+<h1>Knowingly eaten meat on a forbidden day or failed to fast on a fast day?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. Basil the Great: "Fasting is the beginning of virtue."</p><p>Direct: Joel 2:12-13; Matthew 6:16-18; Matthew 9:15</p><p>Joel 2:12-13: "Yet even now, says the LORD, return to me with your whole heart, with fasting, weeping, and mourning. Rend your hearts, not your garments, and return to the LORD, your God, for he is gracious and merciful."</p><p>Matthew 6:16-18: "When you fast, do not look gloomy like the hypocrites. They neglect their appearance, so that they may appear to others to be fasting... But when you fast, anoint your head and wash your face."</p><p>Matthew 9:15: "Jesus answered them, 'Can the wedding guests mourn as long as the bridegroom is with them? The days will come when the bridegroom is taken away from them, and then they will fast.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Eaten or drunk within one hour of receiving Communion, other than for a medical need?">
+
+<h1>Eaten or drunk within one hour of receiving Communion, other than for a medical need?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Third Commandment</p><p><b>Precept:</b> </p><p>Related: St. Cyril of Jerusalem, Mystagogical Catechesis V: "Approaching, therefore, do not come with your wrists extended, or your fingers spread."</p><p>Related: 1 Corinthians 11:27-29; John 6:53-56</p><p>1 Corinthians 11:27-29: "Therefore whoever eats the bread or drinks the cup of the Lord unworthily will have to answer for the body and blood of the Lord."</p><p>John 6:53-56: "Jesus said to them, 'Amen, amen, I say to you, unless you eat the flesh of the Son of Man and drink his blood, you do not have life within you. Whoever eats my flesh and drinks my blood has eternal life.'"</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="If still under my parents' care, failed to obey all that my parents reasonably asked of me?">
+
+<h1>If still under my parents' care, failed to obey all that my parents reasonably asked of me?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: "Children, obey your parents in the Lord."</p><p>Direct: Exodus 20:12; Ephesians 6:1-3; Colossians 3:20</p><p>Exodus 20:12: "Honor your father and your mother, that you may have a long life in the land the LORD your God is giving you."</p><p>Ephesians 6:1-3: "Children, obey your parents in the Lord, for this is right. 'Honor your father and mother.' This is the first commandment with a promise."</p><p>Colossians 3:20: "Children, obey your parents in everything, for this is pleasing to the Lord."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Shown disregard for my parents' wishes, displayed contempt of their demands, or disdained their very being?">
+
+<h1>Shown disregard for my parents' wishes, displayed contempt of their demands, or disdained their very being?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ambrose, Duties of the Clergy I.25: "The first duty is to honor parents."</p><p>Direct: Exodus 20:12; Matthew 15:4-6; Sirach 3:1-16</p><p>Exodus 20:12: "Honor your father and your mother, that you may have a long life in the land the LORD your God is giving you."</p><p>Matthew 15:4-6: "For God said, 'Honor your father and your mother,' and 'Whoever curses father or mother must die.' But you say, 'Whoever says to father or mother, "Any support you might have had from me is dedicated to God," need not honor his father.' You have nullified the word of God for the sake of your tradition."</p><p>Sirach 3:1-16: "Children, pay heed to a father's right; act accordingly, that you may be kept safe... Whoever honors his father atones for sins."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected the needs of my parents in their old age or time of need?">
+
+<h1>Neglected the needs of my parents in their old age or time of need?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Basil the Great: "The bread which you keep belongs to the hungry."</p><p>Direct: 1 Timothy 5:4,8; Sirach 3:12-14; Mark 7:9-13</p><p>1 Timothy 5:4,8: "If a widow has children or grandchildren, let these first learn to perform their religious duty to their own family... And whoever does not provide for relatives and especially family members has denied the faith."</p><p>Sirach 3:12-14: "My son, take care of your father when he is old; grieve him not as long as he lives. Even if his mind fail, be considerate of him."</p><p>Mark 7:9-13: "He went on to say, 'How cleverly you dismiss the commandment of God in order to set up your tradition! For Moses said, "Honor your father and your mother."'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Harbored hatred for my parents?">
+
+<h1>Harbored hatred for my parents?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: "Honor your father and mother."</p><p>Direct: Exodus 20:12; Matthew 5:21-24; 1 John 4:20</p><p>Exodus 20:12: "Honor your father and your mother, that you may have a long life in the land the LORD your God is giving you."</p><p>Matthew 5:21-24: "You have heard that it was said to your ancestors, 'You shall not kill'... But I say to you, whoever is angry with his brother will be liable to judgment."</p><p>1 John 4:20: "If anyone says, 'I love God,' but hates his brother, he is a liar."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Brought shame on my parents?">
+
+<h1>Brought shame on my parents?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: parents are to be honored through upright conduct.</p><p>Related: Proverbs 10:1; Proverbs 23:24-25; Ephesians 6:1-3</p><p>Proverbs 10:1: "A wise son makes his father glad, but a foolish son is a grief to his mother."</p><p>Proverbs 23:24-25: "The father of a just man will greatly rejoice; he who begets a wise son will have joy in him. Let your father and your mother have joy; let her who bore you rejoice."</p><p>Ephesians 6:1-3: "Children, obey your parents in the Lord, for this is right. 'Honor your father and mother.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="If still in school, failed to obey the reasonable demands of my teachers?">
+
+<h1>If still in school, failed to obey the reasonable demands of my teachers?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.104: obedience is due to legitimate authority.</p><p>Related: Proverbs 1:5; Proverbs 12:1; Hebrews 13:17</p><p>Proverbs 1:5: "Let the wise hear and increase in learning, the intelligent acquire skill."</p><p>Proverbs 12:1: "Whoever loves discipline loves knowledge, but he who hates reproof is stupid."</p><p>Hebrews 13:17: "Obey your leaders and defer to them, for they keep watch over you and will have to give an account."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Disrespected my teachers?">
+
+<h1>Disrespected my teachers?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions I.16: "I was not yet able to distinguish clearly between the things that are learned and the things that are taught."</p><p>Related: Proverbs 1:7; Luke 6:40; 1 Thessalonians 5:12-13</p><p>Proverbs 1:7: "The fear of the LORD is the beginning of knowledge; wisdom and instruction fools despise."</p><p>Luke 6:40: "No disciple is superior to the teacher; but when fully trained, every disciple will be like his teacher."</p><p>1 Thessalonians 5:12-13: "We ask you, brothers, to respect those who are laboring among you and who are over you in the Lord and who admonish you."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="If I have children, neglected to give them proper food, clothing, shelter, education, discipline, and care, even after Confirmation?">
+
+<h1>If I have children, neglected to give them proper food, clothing, shelter, education, discipline, and care, even after Confirmation?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: parents are entrusted with the formation of their children.</p><p>Direct: 1 Timothy 5:8; Ephesians 6:4; Proverbs 22:6</p><p>1 Timothy 5:8: "And whoever does not provide for relatives and especially family members has denied the faith and is worse than an unbeliever."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>Proverbs 22:6: "Train the young in the way they should go; even when old, they will not swerve from it."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to provide religious education and formation for my children for as long as they are under my care?">
+
+<h1>Failed to provide religious education and formation for my children for as long as they are under my care?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: "Make your children educated in the discipline and admonition of the Lord."</p><p>Direct: Deuteronomy 6:6-7; Ephesians 6:4; 2 Timothy 3:15</p><p>Deuteronomy 6:6-7: "Take to heart these words which I command you today. Keep repeating them to your children. Recite them when you are at home and when you are away."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>2 Timothy 3:15: "...and that from infancy you have known the sacred scriptures, which are capable of giving you wisdom for salvation through faith in Christ Jesus."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to ensure that my children still under my care regularly frequent the sacraments of Penance and Holy Communion?">
+
+<h1>Failed to ensure that my children still under my care regularly frequent the sacraments of Penance and Holy Communion?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Ephesians 21: parents must care for the souls entrusted to them.</p><p>Related: John 6:53-56; John 20:22-23; Hebrews 10:25</p><p>John 6:53-56: "Jesus said to them, 'Amen, amen, I say to you, unless you eat the flesh of the Son of Man and drink his blood, you do not have life within you.'"</p><p>John 20:22-23: "He breathed on them and said to them, 'Receive the Holy Spirit. Whose sins you forgive are forgiven them, and whose sins you retain are retained.'"</p><p>Hebrews 10:25: "We should not stay away from our assembly, as is the custom of some, but encourage one another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to educate my children in a way that corresponds to Catholic religious disciplines?">
+
+<h1>Failed to educate my children in a way that corresponds to Catholic religious disciplines?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, De Doctrina Christiana I.1: "Our hearts are restless until they rest in you."</p><p>Direct: Deuteronomy 6:6-7; Ephesians 6:4; Matthew 28:19-20</p><p>Deuteronomy 6:6-7: "Take to heart these words which I command you today. Keep repeating them to your children."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>Matthew 28:19-20: "Go, therefore, and make disciples of all nations, baptizing them in the name of the Father, and of the Son, and of the Holy Spirit, teaching them to observe all that I have commanded you."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to provide my children with a positive, prudent, and personalized education in the Catholic teaching on human sexuality?">
+
+<h1>Failed to provide my children with a positive, prudent, and personalized education in the Catholic teaching on human sexuality?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Familiaris Consortio 37: parents are the primary educators of their children.</p><p>Direct: Proverbs 22:6; Ephesians 6:4; 1 Thessalonians 4:3-5</p><p>Proverbs 22:6: "Train the young in the way they should go; even when old, they will not swerve from it."</p><p>Ephesians 6:4: "Fathers, do not provoke your children to anger, but bring them up with the training and instruction of the Lord."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality, that each of you know how to acquire a wife for himself in holiness and honor."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to be a good example to my children of how to live the Catholic Faith?">
+
+<h1>Failed to be a good example to my children of how to live the Catholic Faith?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis of Assisi: "Preach the Gospel at all times; when necessary, use words."</p><p>Direct: Matthew 5:16; Philippians 3:17; 1 Corinthians 11:1</p><p>Matthew 5:16: "Just so, your light must shine before others, that they may see your good deeds and glorify your heavenly Father."</p><p>Philippians 3:17: "Join with others in being imitators of me, brothers, and observe those who thus conduct themselves according to the model you have in us."</p><p>1 Corinthians 11:1: "Be imitators of me, as I am of Christ."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to pray with and for my children?">
+
+<h1>Failed to pray with and for my children?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Monica, as described by St. Augustine, Confessions IX.10: "She wept for me more than mothers weep for the bodily death of their children."</p><p>Direct: Job 1:5; 1 Samuel 1:27-28; Ephesians 6:18</p><p>Job 1:5: "When the days of feasting were finished, Job would send and sanctify them, rising early and offering holocausts for every one of them."</p><p>1 Samuel 1:27-28: "I prayed for this child, and the LORD granted my request. Now I, in turn, give him to the LORD; as long as he lives, he is dedicated to the LORD."</p><p>Ephesians 6:18: "With all prayer and supplication, pray at every opportunity in the Spirit."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to live in humble obedience to those who legitimately exercise authority over me?">
+
+<h1>Failed to live in humble obedience to those who legitimately exercise authority over me?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.104: obedience is owed to lawful authority in its proper sphere.</p><p>Direct: Romans 13:1-7; Hebrews 13:17; Acts 5:29</p><p>Romans 13:1-7: "Let every person be subordinate to the higher authorities, for there is no authority except from God."</p><p>Hebrews 13:17: "Obey your leaders and defer to them, for they keep watch over you and will have to give an account."</p><p>Acts 5:29: "But Peter and the apostles said in reply, 'We must obey God rather than men.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Broken any just law?">
+
+<h1>Broken any just law?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas More: "I die the King’s good servant—and God’s first."</p><p>Direct: Romans 13:1-7; Titus 3:1; 1 Peter 2:13-17</p><p>Romans 13:1-7: "Let every person be subordinate to the higher authorities, for there is no authority except from God, and those that exist have been established by God."</p><p>Titus 3:1: "Remind them to be under the control of magistrates and authorities, to be obedient, to be open to every good enterprise."</p><p>1 Peter 2:13-17: "Be subject to every human institution for the Lord's sake, whether it be to the king as supreme or to governors as sent by him."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Supported or voted for a politician whose positions are opposed to the teachings of Christ and the Catholic Church?">
+
+<h1>Supported or voted for a politician whose positions are opposed to the teachings of Christ and the Catholic Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas More: "I am the King’s good servant, but God’s first."</p><p>Related: Acts 5:29; Proverbs 31:8-9; Micah 6:8</p><p>Acts 5:29: "But Peter and the apostles said in reply, 'We must obey God rather than men.'"</p><p>Proverbs 31:8-9: "Open your mouth in behalf of the mute, for the rights of any who are destitute. Open your mouth, judge justly, defend the needy and the poor."</p><p>Micah 6:8: "You have been told, O mortal, what is good, and what the LORD requires of you: Only to do justice and to love goodness, and to walk humbly with your God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to pray for the deceased members of my family, including the Poor Souls in Purgatory?">
+
+<h1>Failed to pray for the deceased members of my family, including the Poor Souls in Purgatory?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fourth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Monica, as described by St. Augustine, Confessions IX.11: "Lay this body anywhere; let not the care of it trouble you."</p><p>Related: 2 Maccabees 12:44-46; 1 Corinthians 15:29; 2 Timothy 1:16-18</p><p>2 Maccabees 12:44-46: "For if he were not expecting the fallen to rise again, it would have been superfluous and foolish to pray for the dead... Thus he made atonement for the dead that they might be absolved from their sin."</p><p>1 Corinthians 15:29: "Otherwise, what will people accomplish by being baptized for the dead? If the dead are not raised at all, then why are they baptized for them?"</p><p>2 Timothy 1:16-18: "May the Lord grant mercy to the household of Onesiphorus... May the Lord grant him to find mercy from the Lord on that day."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Unjustly and intentionally killed a human being through murder?">
+
+<h1>Unjustly and intentionally killed a human being through murder?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Evangelium Vitae 58: "The Gospel of life is at the heart of Jesus’ message."</p><p>Direct: Exodus 20:13; Matthew 5:21-22; 1 John 3:15</p><p>Exodus 20:13: "You shall not kill."</p><p>Matthew 5:21-22: "You have heard that it was said to your ancestors, 'You shall not kill'... But I say to you, whoever is angry with his brother will be liable to judgment."</p><p>1 John 3:15: "Everyone who hates his brother is a murderer, and you know that no murderer has eternal life remaining in him."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been guilty, through negligence or lack of intention, of the death of another person?">
+
+<h1>Been guilty, through negligence or lack of intention, of the death of another person?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.64: responsibility may arise from negligence.</p><p>Direct: Exodus 21:12-14; Deuteronomy 22:8; Luke 12:47-48</p><p>Exodus 21:12-14: "Whoever strikes a man a mortal blow shall be put to death."</p><p>Deuteronomy 22:8: "When you build a new house, put a parapet around the roof; otherwise you will bring the guilt of bloodshed upon your house if someone falls off it."</p><p>Luke 12:47-48: "That servant who knew his master's will but did not make preparations or act in accord with his will shall be beaten severely."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been involved in an abortion, directly or indirectly, through advice, encouragement, providing money, or facilitating it in any other way?">
+
+<h1>Been involved in an abortion, directly or indirectly, through advice, encouragement, providing money, or facilitating it in any other way?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Evangelium Vitae 58: "Human life is sacred and inviolable."</p><p>Direct: Psalm 139:13-16; Jeremiah 1:5; Luke 1:41-44</p><p>Psalm 139:13-16: "You formed my inmost being; you knit me in my mother's womb... Your eyes saw my unformed substance."</p><p>Jeremiah 1:5: "Before I formed you in the womb I knew you, before you were born I dedicated you."</p><p>Luke 1:41-44: "When Elizabeth heard Mary's greeting, the infant leaped in her womb, and Elizabeth, filled with the Holy Spirit, cried out... 'the infant in my womb leaped for joy.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Seriously considered or attempted suicide?">
+
+<h1>Seriously considered or attempted suicide?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Evangelium Vitae 66: God alone remains the master of life and death.</p><p>Related: 1 Kings 19:4-8; Psalm 34:18; Romans 8:38-39</p><p>1 Kings 19:4-8: "He prayed for death, saying, 'This is enough, LORD! Take my life, for I am no better than my ancestors.'"</p><p>Psalm 34:18: "The LORD is close to the brokenhearted; and those who are crushed in spirit he saves."</p><p>Romans 8:38-39: "For I am convinced that neither death, nor life... will be able to separate us from the love of God in Christ Jesus our Lord."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Supported, promoted, or encouraged assisted suicide or euthanasia?">
+
+<h1>Supported, promoted, or encouraged assisted suicide or euthanasia?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Evangelium Vitae 64: "Euthanasia is a grave violation of the law of God."</p><p>Direct: Exodus 20:13; Job 1:21; Romans 14:7-8</p><p>Exodus 20:13: "You shall not kill."</p><p>Job 1:21: "The LORD gave and the LORD has taken away; blessed be the name of the LORD!"</p><p>Romans 14:7-8: "None of us lives for oneself, and no one dies for oneself. For if we live, we live for the Lord, and if we die, we die for the Lord."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Deliberately desired to kill an innocent human being?">
+
+<h1>Deliberately desired to kill an innocent human being?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Evangelium Vitae 57: "You shall not kill" has absolute value when the innocent person is concerned.</p><p>Direct: Genesis 9:6; Matthew 5:21-22; 1 John 3:15</p><p>Genesis 9:6: "Anyone who sheds the blood of man, by man shall his blood be shed; for in the image of God has man been made."</p><p>Matthew 5:21-22: "You have heard that it was said to your ancestors, 'You shall not kill'... But I say to you, whoever is angry with his brother will be liable to judgment."</p><p>1 John 3:15: "Everyone who hates his brother is a murderer, and you know that no murderer has eternal life remaining in him."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Unjustly inflicted bodily harm on another person?">
+
+<h1>Unjustly inflicted bodily harm on another person?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Basil the Great: "The bread which you keep belongs to the hungry."</p><p>Direct: Exodus 21:18-19; Matthew 5:38-42; 1 Corinthians 6:19-20</p><p>Exodus 21:18-19: "When men quarrel and one strikes the other with a stone or with his fist... he shall pay for his loss of time and see that he is thoroughly healed."</p><p>Matthew 5:38-42: "You have heard that it was said, 'An eye for an eye and a tooth for a tooth.' But I say to you, offer no resistance to one who is evil."</p><p>1 Corinthians 6:19-20: "Do you not know that your body is a temple of the Holy Spirit within you... Therefore, glorify God in your body."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Unjustly threatened another person with bodily harm?">
+
+<h1>Unjustly threatened another person with bodily harm?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "Let us not be overcome by anger, but overcome anger."</p><p>Direct: Matthew 5:21-22; Ephesians 4:31-32; James 3:9-10</p><p>Matthew 5:21-22: "You have heard that it was said to your ancestors, 'You shall not kill'... But I say to you, whoever is angry with his brother will be liable to judgment."</p><p>Ephesians 4:31-32: "All bitterness, fury, anger, shouting, and reviling must be removed from you."</p><p>James 3:9-10: "With it we bless the Lord and Father, and with it we curse human beings who are made in the likeness of God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Verbally or emotionally abused another person?">
+
+<h1>Verbally or emotionally abused another person?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ephrem the Syrian: "If you insult a man, you insult the image of God."</p><p>Direct: Matthew 5:22; Ephesians 4:29-32; Colossians 3:19</p><p>Matthew 5:22: "But I say to you, whoever is angry with his brother will be liable to judgment... and whoever says, 'You fool,' will be liable to fiery Gehenna."</p><p>Ephesians 4:29-32: "No foul language should come out of your mouths, but only such as is good for needed edification."</p><p>Colossians 3:19: "Husbands, love your wives, and avoid any bitterness toward them."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Gossiped, slandered, detracted, or calumniated?">
+
+<h1>Gossiped, slandered, detracted, or calumniated?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.27: "Detraction is a kind of murder."</p><p>Direct: Leviticus 19:16; James 3:5-6; Ephesians 4:31</p><p>Leviticus 19:16: "You shall not go about spreading slander among your people; nor shall you stand by idly when your neighbor's life is at stake. I am the LORD."</p><p>James 3:5-6: "So also the tongue is a small member and yet has great pretensions... The tongue is also a fire."</p><p>Ephesians 4:31: "All bitterness, fury, anger, shouting, and reviling must be removed from you, along with all malice."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Hated another person or wished him or her evil?">
+
+<h1>Hated another person or wished him or her evil?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John of the Cross: "Where there is no love, put love, and you will draw out love."</p><p>Direct: Matthew 5:43-48; 1 John 3:15; 1 John 4:20</p><p>Matthew 5:43-48: "You have heard that it was said, 'You shall love your neighbor and hate your enemy.' But I say to you, love your enemies, and pray for those who persecute you."</p><p>1 John 3:15: "Everyone who hates his brother is a murderer, and you know that no murderer has eternal life remaining in him."</p><p>1 John 4:20: "If anyone says, 'I love God,' but hates his brother, he is a liar."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been prejudiced or unjustly discriminated against others because of their race, color, nationality, sex, or religion?">
+
+<h1>Been prejudiced or unjustly discriminated against others because of their race, color, nationality, sex, or religion?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Peter Claver: "We must speak to them with our hands before we try to speak to them with our lips."</p><p>Direct: Acts 10:34-35; James 2:1-9; Galatians 3:28</p><p>Acts 10:34-35: "Then Peter proceeded to speak and said, 'In truth, I see that God shows no partiality. Rather, in every nation whoever fears him and does what is right is acceptable to him.'"</p><p>James 2:1-9: "My brothers, show no partiality as you adhere to the faith in our glorious Lord Jesus Christ... If you show partiality, you commit sin."</p><p>Galatians 3:28: "There is neither Jew nor Greek, there is neither slave nor free person, there is not male and female; for you are all one in Christ Jesus."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Joined a hate group?">
+
+<h1>Joined a hate group?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Maximilian Kolbe: "Hatred is not a creative force."</p><p>Direct: Matthew 5:43-48; 1 John 3:15; Romans 12:19-21</p><p>Matthew 5:43-48: "Love your enemies, and pray for those who persecute you, that you may be children of your heavenly Father."</p><p>1 John 3:15: "Everyone who hates his brother is a murderer."</p><p>Romans 12:19-21: "Beloved, do not look for revenge but leave room for the wrath... 'If your enemy is hungry, feed him; if he is thirsty, give him something to drink.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Purposely provoked another by teasing or nagging?">
+
+<h1>Purposely provoked another by teasing or nagging?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "A gentle answer turns away wrath."</p><p>Direct: Proverbs 15:1; Ephesians 4:29; Colossians 3:21</p><p>Proverbs 15:1: "A mild answer turns back wrath, but a harsh word stirs up anger."</p><p>Ephesians 4:29: "No foul language should come out of your mouths, but only such as is good for needed edification."</p><p>Colossians 3:21: "Fathers, do not provoke your children, so that they may not become discouraged."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Recklessly endangered my life or health, or that of another, by my actions?">
+
+<h1>Recklessly endangered my life or health, or that of another, by my actions?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.64: carelessness can make one responsible for harm.</p><p>Direct: Deuteronomy 22:8; Matthew 22:39; 1 Corinthians 6:19-20</p><p>Deuteronomy 22:8: "When you build a new house, put a parapet around the roof; otherwise you will bring the guilt of bloodshed upon your house if someone falls off it."</p><p>Matthew 22:39: "The second is like it: You shall love your neighbor as yourself."</p><p>1 Corinthians 6:19-20: "Do you not know that your body is a temple of the Holy Spirit within you... Therefore, glorify God in your body."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Driven recklessly or under the influence of alcohol or other drugs?">
+
+<h1>Driven recklessly or under the influence of alcohol or other drugs?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions X.29: "Self-control is the guardian of the soul."</p><p>Direct: Proverbs 20:1; Ephesians 5:18; Romans 13:13</p><p>Proverbs 20:1: "Wine is a mocker, strong drink a brawler; none who is led astray by it is wise."</p><p>Ephesians 5:18: "And do not get drunk on wine, in which lies debauchery, but be filled with the Spirit."</p><p>Romans 13:13: "Let us conduct ourselves properly as in the day, not in orgies and drunkenness, not in promiscuity and lust."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Abused alcohol or other drugs?">
+
+<h1>Abused alcohol or other drugs?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "Nothing is so destructive as intemperance."</p><p>Direct: Proverbs 23:29-35; Ephesians 5:18; 1 Corinthians 6:12</p><p>Proverbs 23:29-35: "Who has woe? Who has sorrow? Who has contentions?... Those who stay long over wine, who go to try mixed wine."</p><p>Ephesians 5:18: "And do not get drunk on wine, in which lies debauchery, but be filled with the Spirit."</p><p>1 Corinthians 6:12: "'Everything is lawful for me,' but not everything is beneficial."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Sold or given drugs to others to use for non-therapeutic purposes?">
+
+<h1>Sold or given drugs to others to use for non-therapeutic purposes?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Basil the Great: "The poison which you give to another returns upon yourself."</p><p>Direct: Habakkuk 2:15; Matthew 18:6; Romans 14:13</p><p>Habakkuk 2:15: "Woe to you who give your neighbors drink, pouring out your poison until they are drunk!"</p><p>Matthew 18:6: "Whoever causes one of these little ones who believe in me to sin, it would be better for him to have a great millstone hung around his neck."</p><p>Romans 14:13: "Then let us no longer judge one another, but rather resolve never to put a stumbling block or hindrance in the way of a brother."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Used tobacco immoderately?">
+
+<h1>Used tobacco immoderately?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Paul of the Cross: "The body is the temple of the Holy Spirit."</p><p>Related: 1 Corinthians 6:19-20; 1 Corinthians 10:31; Romans 12:1</p><p>1 Corinthians 6:19-20: "Do you not know that your body is a temple of the Holy Spirit within you... Therefore, glorify God in your body."</p><p>1 Corinthians 10:31: "So whether you eat or drink, or whatever you do, do everything for the glory of God."</p><p>Romans 12:1: "I urge you therefore, brothers, by the mercies of God, to offer your bodies as a living sacrifice, holy and pleasing to God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Overeaten?">
+
+<h1>Overeaten?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Gregory the Great, Moralia XXX: "The belly is the first enemy of virtue."</p><p>Direct: Proverbs 23:20-21; Luke 21:34; Philippians 3:19</p><p>Proverbs 23:20-21: "Be not among those who drink too much wine, or among those who gorge themselves on meat; for the drunkard and the glutton come to poverty."</p><p>Luke 21:34: "Beware that your hearts do not become drowsy from carousing and drunkenness and the anxieties of daily life."</p><p>Philippians 3:19: "Their end is destruction. Their God is their stomach; their glory is in their 'shame.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Encouraged others to sin by giving scandal?">
+
+<h1>Encouraged others to sin by giving scandal?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "Nothing is colder than a Christian who does not care for the salvation of others."</p><p>Direct: Matthew 18:6-7; Romans 14:13; 1 Corinthians 8:9-13</p><p>Matthew 18:6-7: "Whoever causes one of these little ones who believe in me to sin, it would be better for him to have a great millstone hung around his neck... Woe to the world because of things that cause sin! Everyday causes must come, but woe to the one through whom they come!"</p><p>Romans 14:13: "Then let us no longer judge one another, but rather resolve never to put a stumbling block or hindrance in the way of a brother."</p><p>1 Corinthians 8:9-13: "When you sin against your brothers and wound their consciences, weak as they are, you are sinning against Christ."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Helped another to commit a mortal sin through advice, driving them somewhere, dressing or acting immodestly, or in another way?">
+
+<h1>Helped another to commit a mortal sin through advice, driving them somewhere, dressing or acting immodestly, or in another way?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Enchiridion 75: charity must seek the good of the other.</p><p>Direct: Romans 1:32; Matthew 18:6-7; 1 Corinthians 8:12-13</p><p>Romans 1:32: "Although they know the just decree of God that all who practice such things deserve death, they not only do them but give approval to those who practice them."</p><p>Matthew 18:6-7: "Woe to the world because of things that cause sin! Everyday causes must come, but woe to the one through whom they come!"</p><p>1 Corinthians 8:12-13: "When you sin against your brothers and wound their consciences, weak as they are, you are sinning against Christ."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Caused serious injury to another through criminal neglect?">
+
+<h1>Caused serious injury to another through criminal neglect?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.64: omission can be morally responsible when a duty exists.</p><p>Direct: Luke 10:30-37; James 4:17; 1 John 3:17-18</p><p>Luke 10:30-37: "A man fell victim to robbers... But a Samaritan traveler who came upon him was moved with compassion at the sight."</p><p>James 4:17: "So for one who knows the right thing to do and does not do it, it is a sin."</p><p>1 John 3:17-18: "If someone who has worldly means sees a brother in need and refuses him compassion, how can the love of God remain in him? Children, let us love not in word or speech but in deed and truth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Indulged in unjust anger?">
+
+<h1>Indulged in unjust anger?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ephrem the Syrian: "Keep not anger in your heart."</p><p>Direct: Matthew 5:21-22; Ephesians 4:26-27,31-32; James 1:19-20</p><p>Matthew 5:21-22: "You have heard that it was said to your ancestors, 'You shall not kill'... But I say to you, whoever is angry with his brother will be liable to judgment."</p><p>Ephesians 4:26-27,31-32: "Be angry but do not sin; do not let the sun set on your anger, and do not leave room for the devil... All bitterness, fury, anger, shouting, and reviling must be removed from you."</p><p>James 1:19-20: "Know this, my dear brothers: everyone should be quick to hear, slow to speak, slow to wrath; for the wrath of man does not accomplish the righteousness of God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Refused to control my temper?">
+
+<h1>Refused to control my temper?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales: "Nothing is so strong as gentleness, nothing so gentle as real strength."</p><p>Direct: Proverbs 16:32; Galatians 5:22-23; James 1:19-20</p><p>Proverbs 16:32: "A patient man is better than a warrior, and he who rules his temper better than he who takes a city."</p><p>Galatians 5:22-23: "In contrast, the fruit of the Spirit is love, joy, peace, patience, kindness, generosity, faithfulness, gentleness, self-control."</p><p>James 1:19-20: "Everyone should be quick to hear, slow to speak, slow to wrath."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been hateful to, quarreled with, or willfully hurt someone?">
+
+<h1>Been hateful to, quarreled with, or willfully hurt someone?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John of the Cross: "Where there is no love, put love."</p><p>Direct: Matthew 5:23-24; Romans 12:18; Ephesians 4:31-32</p><p>Matthew 5:23-24: "Therefore, if you bring your gift to the altar, and there recall that your brother has anything against you, leave your gift there at the altar, go first and be reconciled with your brother."</p><p>Romans 12:18: "If possible, on your part, live at peace with all."</p><p>Ephesians 4:31-32: "All bitterness, fury, anger, shouting, and reviling must be removed from you, along with all malice. And be kind to one another, compassionate, forgiving one another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been unforgiving of others, especially when mercy or pardon was requested?">
+
+<h1>Been unforgiving of others, especially when mercy or pardon was requested?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Paul II: "There is no peace without justice, there is no justice without forgiveness."</p><p>Direct: Matthew 6:14-15; Matthew 18:21-35; Colossians 3:13</p><p>Matthew 6:14-15: "If you forgive others their transgressions, your heavenly Father will forgive you. But if you do not forgive others, neither will your Father forgive your transgressions."</p><p>Matthew 18:21-35: "Peter approaching asked him, 'Lord, if my brother sins against me, how often must I forgive him? As many as seven times?' Jesus answered, 'I say to you, not seven times but seventy-seven times.'"</p><p>Colossians 3:13: "Bearing with one another and forgiving one another, if one has a grievance against another; as the Lord has forgiven you, so must you also do."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Sought revenge or hoped something bad would happen to someone?">
+
+<h1>Sought revenge or hoped something bad would happen to someone?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Catherine of Siena: "The way to heaven is the way of patience."</p><p>Direct: Romans 12:19-21; Proverbs 24:17-18; Matthew 5:44</p><p>Romans 12:19-21: "Beloved, do not look for revenge but leave room for the wrath... 'If your enemy is hungry, feed him; if he is thirsty, give him something to drink.'"</p><p>Proverbs 24:17-18: "Do not rejoice when your enemy falls, and when he stumbles, let not your heart be glad."</p><p>Matthew 5:44: "But I say to you, love your enemies, and pray for those who persecute you."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Delighted to see someone else get hurt or suffer?">
+
+<h1>Delighted to see someone else get hurt or suffer?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The glory of Christianity is to overcome evil with good."</p><p>Direct: Proverbs 24:17-18; Romans 12:20-21; 1 Corinthians 13:6</p><p>Proverbs 24:17-18: "Do not rejoice when your enemy falls, and when he stumbles, let not your heart be glad."</p><p>Romans 12:20-21: "Do not be conquered by evil, but conquer evil with good."</p><p>1 Corinthians 13:6: "[Love] does not rejoice over wrongdoing but rejoices with the truth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Treated animals cruelly, causing them to suffer or die needlessly?">
+
+<h1>Treated animals cruelly, causing them to suffer or die needlessly?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Fifth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis of Assisi: "If you have men who will exclude any of God’s creatures from the shelter of compassion, you have men who will deal likewise with their fellow men."</p><p>Related: Genesis 1:26-28; Proverbs 12:10; Matthew 6:26</p><p>Genesis 1:26-28: "Then God said: 'Let us make human beings in our image, after our likeness. Let them have dominion over the fish of the sea, the birds of the air, the tame animals...'"</p><p>Proverbs 12:10: "The just man takes care of his beast, but the heart of the wicked is cruel."</p><p>Matthew 6:26: "Look at the birds in the sky; they do not sow or reap, they gather nothing into barns, yet your heavenly Father feeds them."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to practice and grow in the virtue of chastity?">
+
+<h1>Neglected to practice and grow in the virtue of chastity?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions VIII.11: "Make me chaste, but not yet."</p><p>Direct: Matthew 5:8; 1 Thessalonians 4:3-5; Galatians 5:22-24</p><p>Matthew 5:8: "Blessed are the clean of heart, for they will see God."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality, that each of you know how to acquire a wife for himself in holiness and honor."</p><p>Galatians 5:22-24: "In contrast, the fruit of the Spirit is love, joy, peace, patience... Now those who belong to Christ Jesus have crucified their flesh with its passions and desires."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Given in to lust, meaning the desire for sexual pleasure unrelated to spousal love in marriage?">
+
+<h1>Given in to lust, meaning the desire for sexual pleasure unrelated to spousal love in marriage?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John of the Cross: "The smallest movement of pure love is worth more to the Church than all works put together."</p><p>Direct: Matthew 5:27-30; 1 Thessalonians 4:3-5; 1 John 2:16</p><p>Matthew 5:27-30: "You have heard that it was said, 'You shall not commit adultery.' But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality."</p><p>1 John 2:16: "For all that is in the world, sensual lust, enticement for the eyes, and a pretentious life, is not from the Father but is from the world."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Used an artificial means of birth control, including withdrawal?">
+
+<h1>Used an artificial means of birth control, including withdrawal?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Familiaris Consortio 32: responsible parenthood must respect the meaning of marriage and procreation.</p><p>Related: Genesis 1:28; Psalm 127:3; 1 Corinthians 7:3-5</p><p>Genesis 1:28: "God blessed them and God said to them: Be fertile and multiply; fill the earth and subdue it."</p><p>Psalm 127:3: "Certainly sons are a gift from the LORD, the fruit of the womb, a reward."</p><p>1 Corinthians 7:3-5: "The husband should fulfill his duty to his wife, and likewise the wife to her husband."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Refused to be open to conception without just cause?">
+
+<h1>Refused to be open to conception without just cause?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Theology of the Body: marital love is both unitive and procreative.</p><p>Related: Genesis 1:28; Psalm 127:3; 1 Corinthians 7:3-5</p><p>Genesis 1:28: "God blessed them and God said to them: Be fertile and multiply; fill the earth and subdue it."</p><p>Psalm 127:3: "Certainly sons are a gift from the LORD, the fruit of the womb, a reward."</p><p>1 Corinthians 7:3-5: "The husband should fulfill his duty to his wife, and likewise the wife to her husband."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Participated in immoral techniques such as in vitro fertilization or artificial insemination?">
+
+<h1>Participated in immoral techniques such as in vitro fertilization or artificial insemination?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Donum Vitae: procreation should respect the dignity of marriage and the child.</p><p>Related: Genesis 1:27-28; Psalm 139:13-16; Matthew 19:4-6</p><p>Genesis 1:27-28: "God created mankind in his image... male and female he created them. God blessed them and God said to them: Be fertile and multiply."</p><p>Psalm 139:13-16: "You formed my inmost being; you knit me in my mother's womb."</p><p>Matthew 19:4-6: "Have you not read that from the beginning the Creator made them male and female... Therefore what God has joined together, no human being must separate."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Sterilized my sex organs for contraceptive purposes?">
+
+<h1>Sterilized my sex organs for contraceptive purposes?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Humanae Vitae 14: the direct interruption of the generative process is excluded.</p><p>Related: Genesis 1:28; Matthew 19:4-6; 1 Corinthians 6:19-20</p><p>Genesis 1:28: "God blessed them and God said to them: Be fertile and multiply."</p><p>Matthew 19:4-6: "Have you not read that from the beginning the Creator made them male and female?"</p><p>1 Corinthians 6:19-20: "Do you not know that your body is a temple of the Holy Spirit within you... Therefore, glorify God in your body."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Deprived my spouse of the marital right without just cause?">
+
+<h1>Deprived my spouse of the marital right without just cause?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Familiaris Consortio 11: marriage is a covenant of love and life.</p><p>Direct: 1 Corinthians 7:3-5; Genesis 2:24</p><p>1 Corinthians 7:3-5: "The husband should fulfill his duty to his wife, and likewise the wife to her husband. A wife does not have authority over her own body, but rather her husband; and similarly a husband does not have authority over his own body, but rather his wife."</p><p>Genesis 2:24: "That is why a man leaves his father and mother and clings to his wife, and the two of them become one body."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Claimed my own marital right without concern for my spouse?">
+
+<h1>Claimed my own marital right without concern for my spouse?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Familiaris Consortio 18: marital love requires total self-giving.</p><p>Direct: 1 Corinthians 7:3-5; Philippians 2:3-4; Ephesians 5:21-33</p><p>1 Corinthians 7:3-5: "The husband should fulfill his duty to his wife, and likewise the wife to her husband."</p><p>Philippians 2:3-4: "Do nothing out of selfishness or out of vainglory; rather, humbly regard others as more important than yourselves."</p><p>Ephesians 5:21-33: "Be subordinate to one another out of reverence for Christ... In any case, each one of you should love his wife as himself."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Deliberately caused male climax outside of normal sexual intercourse?">
+
+<h1>Deliberately caused male climax outside of normal sexual intercourse?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Theology of the Body: the body speaks the language of total self-gift.</p><p>Related: Genesis 2:24; 1 Corinthians 6:18-20; Hebrews 13:4</p><p>Genesis 2:24: "That is why a man leaves his father and mother and clings to his wife, and the two of them become one body."</p><p>1 Corinthians 6:18-20: "Avoid immorality. Every other sin a person commits is outside the body, but the immoral person sins against his own body."</p><p>Hebrews 13:4: "Let marriage be honored among all and the marriage bed be kept undefiled."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Masturbated, meaning deliberately stimulated my own sexual organs for sexual pleasure outside of the conjugal act?">
+
+<h1>Masturbated, meaning deliberately stimulated my own sexual organs for sexual pleasure outside of the conjugal act?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions II.2: "I dared to seek pleasure not only in the act itself but in the desire."</p><p>Related: Matthew 5:28; 1 Corinthians 6:18; 1 Thessalonians 4:3-5</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>1 Corinthians 6:18: "Avoid immorality. Every other sin a person commits is outside the body, but the immoral person sins against his own body."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality, that each of you know how to acquire a wife for himself in holiness and honor."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Willfully entertained impure thoughts?">
+
+<h1>Willfully entertained impure thoughts?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions X.30: "You command continence; grant what you command."</p><p>Direct: Matthew 5:28; Philippians 4:8; 2 Timothy 2:22</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>Philippians 4:8: "Finally, brothers, whatever is true, whatever is honorable, whatever is just, whatever is pure... think about these things."</p><p>2 Timothy 2:22: "So turn from youthful desires and pursue righteousness, faith, love, and peace along with those who call on the Lord with a pure heart."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Purchased, viewed, or made use of pornography?">
+
+<h1>Purchased, viewed, or made use of pornography?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Theology of the Body: the person must never be reduced to an object of use.</p><p>Direct: Matthew 5:28; Philippians 4:8; 1 Thessalonians 4:3-5</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>Philippians 4:8: "Finally, brothers, whatever is true, whatever is honorable, whatever is just, whatever is pure, whatever is lovely... think about these things."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Watched or promoted movies and television programs that involve sex and nudity?">
+
+<h1>Watched or promoted movies and television programs that involve sex and nudity?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Philip Neri: "The first lesson of spiritual life is to avoid the near occasions of sin."</p><p>Related: Job 31:1; Psalm 101:3; Matthew 5:28</p><p>Job 31:1: "I made a covenant with my eyes; how then could I gaze at a virgin?"</p><p>Psalm 101:3: "I will not set before my eyes anything that is base. I hate the work of those who fall away."</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Listened to music or jokes that are harmful to purity, or read books that are immoral?">
+
+<h1>Listened to music or jokes that are harmful to purity, or read books that are immoral?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Paulinus of Nola: "Let us guard the senses, for through them the enemy enters."</p><p>Direct: Ephesians 5:3-4; Philippians 4:8; 1 Corinthians 15:33</p><p>Ephesians 5:3-4: "Immorality or any impurity or greed must not even be mentioned among you, as is fitting among holy ones, no obscenity or silly or suggestive talk."</p><p>Philippians 4:8: "Finally, brothers, whatever is true, whatever is honorable... think about these things."</p><p>1 Corinthians 15:33: "Do not be led astray: 'Bad company corrupts good morals.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed adultery, meaning sexual relations with someone who is married or with someone other than my spouse?">
+
+<h1>Committed adultery, meaning sexual relations with someone who is married or with someone other than my spouse?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, De Bono Coniugali 11: marriage requires fidelity.</p><p>Direct: Exodus 20:14; Matthew 5:27-28; Matthew 19:4-6; Hebrews 13:4</p><p>Exodus 20:14: "You shall not commit adultery."</p><p>Matthew 5:27-28: "You have heard that it was said, 'You shall not commit adultery.' But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>Matthew 19:4-6: "Have you not read that from the beginning the Creator made them male and female... Therefore what God has joined together, no human being must separate."</p><p>Hebrews 13:4: "Let marriage be honored among all and the marriage bed be kept undefiled, for God will judge the immoral and adulterers."</p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed incest, meaning sexual relations with a relative closer than the third degree or with an in-law?">
+
+<h1>Committed incest, meaning sexual relations with a relative closer than the third degree or with an in-law?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom, Homily on Romans 24: sexual immorality violates the order of nature and family.</p><p>Direct: Leviticus 18:6-18; 1 Corinthians 5:1-5</p><p>Leviticus 18:6-18: "None of you shall approach any close relative to have sexual intercourse. I am the LORD..."</p><p>1 Corinthians 5:1-5: "It is widely reported that there is immorality among you, and immorality of a kind not found even among pagans: a man has his father's wife."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed fornication, meaning sexual relations with someone of the opposite sex when neither person is married to the other?">
+
+<h1>Committed fornication, meaning sexual relations with someone of the opposite sex when neither person is married to the other?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions II.2: "I was in love with loving."</p><p>Direct: 1 Corinthians 6:18; 1 Thessalonians 4:3-5; Ephesians 5:3</p><p>1 Corinthians 6:18: "Avoid immorality. Every other sin a person commits is outside the body, but the immoral person sins against his own body."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality, that each of you know how to acquire a wife for himself in holiness and honor."</p><p>Ephesians 5:3: "Immorality or any impurity or greed must not even be mentioned among you, as is fitting among holy ones."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Engaged in homosexual activity?">
+
+<h1>Engaged in homosexual activity?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions X.29: "He loves you too little who loves anything together with you."</p><p>Related: Romans 1:24-27; 1 Corinthians 6:9-11; 1 Thessalonians 4:3-5</p><p>Romans 1:24-27: "Therefore, God handed them over to impurity through the lusts of their hearts for the mutual degradation of their bodies... Their females exchanged natural relations for unnatural, and the males likewise gave up natural relations with females."</p><p>1 Corinthians 6:9-11: "Do not be deceived; neither fornicators nor idolaters... nor sodomites will inherit the kingdom of God."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed rape?">
+
+<h1>Committed rape?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Mulieris Dignitatem 10: the person must never be treated as an object of domination.</p><p>Direct: Deuteronomy 22:25-27; 2 Samuel 13:1-22; 1 Thessalonians 4:3-6</p><p>Deuteronomy 22:25-27: "If, however, the man meets the engaged girl in the open country, and seizes her and lies with her, only the man who lay with her shall die."</p><p>2 Samuel 13:1-22: "Amnon said to Tamar, 'Come, lie with me, my sister.' But she answered him, 'No, my brother! Do not humiliate me, for such a thing is not done in Israel!'"</p><p>1 Thessalonians 4:3-6: "This is the will of God... that no one take advantage of or exploit a brother in this matter."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Engaged in sexual foreplay, such as petting or excessive touching, reserved for marriage?">
+
+<h1>Engaged in sexual foreplay, such as petting or excessive touching, reserved for marriage?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.13: purity requires prudence in relationships.</p><p>Related: Matthew 5:28; 1 Thessalonians 4:3-5; Ephesians 5:3</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p>1 Thessalonians 4:3-5: "This is the will of God, your holiness: that you refrain from immorality, that each of you know how to acquire a wife for himself in holiness and honor."</p><p>Ephesians 5:3: "Immorality or any impurity or greed must not even be mentioned among you, as is fitting among holy ones."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Preyed upon children or youth for my sexual pleasure?">
+
+<h1>Preyed upon children or youth for my sexual pleasure?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The young are a sacred trust."</p><p>Direct: Matthew 18:6; Mark 9:42; 1 Thessalonians 4:3-6</p><p>Matthew 18:6: "Whoever causes one of these little ones who believe in me to sin, it would be better for him to have a great millstone hung around his neck and to be drowned in the depths of the sea."</p><p>Mark 9:42: "Whoever causes one of these little ones who believe in me to sin, it would be better for him if a great millstone were put around his neck and he were thrown into the sea."</p><p>1 Thessalonians 4:3-6: "This is the will of God, your holiness... that no one take advantage of or exploit a brother in this matter."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Engaged in unnatural sexual activities, including activities that are not inherently natural to the sexual act, such as sex toys, even in marriage?">
+
+<h1>Engaged in unnatural sexual activities, including activities that are not inherently natural to the sexual act, such as sex toys, even in marriage?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Theology of the Body: the marital act expresses a total and personal gift.</p><p>Related: Genesis 2:24; 1 Corinthians 6:18-20; Hebrews 13:4</p><p>Genesis 2:24: "That is why a man leaves his father and mother and clings to his wife, and the two of them become one body."</p><p>1 Corinthians 6:18-20: "Avoid immorality... Do you not know that your body is a temple of the Holy Spirit within you?"</p><p>Hebrews 13:4: "Let marriage be honored among all and the marriage bed be kept undefiled."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Engaged in prostitution or paid for the services of a prostitute?">
+
+<h1>Engaged in prostitution or paid for the services of a prostitute?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Confessions III.1: disordered desire turns the heart from God.</p><p>Direct: 1 Corinthians 6:15-20; Deuteronomy 23:17-18; Proverbs 6:32</p><p>1 Corinthians 6:15-20: "Do you not know that your bodies are members of Christ? Shall I then take the members of Christ and make them members of a prostitute? Never!... Avoid immorality."</p><p>Deuteronomy 23:17-18: "No Israelite woman shall become a temple prostitute, nor shall any Israelite man become a temple prostitute. You shall not bring the fee of a prostitute or the pay of a dog into the house of the LORD."</p><p>Proverbs 6:32: "He who commits adultery is without sense; he who does it destroys himself."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Seduced someone or allowed myself to be seduced?">
+
+<h1>Seduced someone or allowed myself to be seduced?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.13: "Avoid all occasions and companions that may lead you into sin."</p><p>Direct: Proverbs 7:6-27; 1 Corinthians 6:18; 2 Timothy 2:22</p><p>Proverbs 7:6-27: "For at the window of my house I looked out through my lattice, and I saw among the simple ones... a young man lacking sense, passing along the street near her corner..."</p><p>1 Corinthians 6:18: "Avoid immorality. Every other sin a person commits is outside the body, but the immoral person sins against his own body."</p><p>2 Timothy 2:22: "So turn from youthful desires and pursue righteousness, faith, love, and peace along with those who call on the Lord with a pure heart."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Made uninvited and unwelcome sexual advances toward another?">
+
+<h1>Made uninvited and unwelcome sexual advances toward another?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Mulieris Dignitatem 10: every person possesses inviolable dignity.</p><p>Direct: 1 Thessalonians 4:3-6; Matthew 7:12; Philippians 2:3-4</p><p>1 Thessalonians 4:3-6: "This is the will of God, your holiness... that no one take advantage of or exploit a brother in this matter."</p><p>Matthew 7:12: "Do to others whatever you would have them do to you. This is the law and the prophets."</p><p>Philippians 2:3-4: "Do nothing out of selfishness or out of vainglory; rather, humbly regard others as more important than yourselves."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Purposely dressed immodestly?">
+
+<h1>Purposely dressed immodestly?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Sixth & Ninth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.25: modesty should express reverence for oneself and others.</p><p>Related: 1 Timothy 2:9-10; 1 Peter 3:3-4; Matthew 5:28</p><p>1 Timothy 2:9-10: "Similarly, too, women should adorn themselves with proper conduct, with modesty and sobriety, not with braided hair and gold or pearls or costly clothes."</p><p>1 Peter 3:3-4: "Your adornment should not be an external one... but rather the hidden character of the heart with the imperishable beauty of a gentle and quiet spirit."</p><p>Matthew 5:28: "But I say to you, everyone who looks at a woman with lust has already committed adultery with her in his heart."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Stolen something that does not belong to me against the reasonable will of the owner?">
+
+<h1>Stolen something that does not belong to me against the reasonable will of the owner?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Basil the Great: "The bread which you keep belongs to the hungry."</p><p>Direct: Exodus 20:15; Ephesians 4:28; 1 Corinthians 6:9-10</p><p>Exodus 20:15: "You shall not steal."</p><p>Ephesians 4:28: "The thief must no longer steal, but rather labor, doing honest work with his own hands, so that he may have something to share with one in need."</p><p>1 Corinthians 6:9-10: "Do not be deceived; neither fornicators nor idolaters nor adulterers... nor thieves nor the greedy... will inherit the kingdom of God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Envied others on account of their possessions?">
+
+<h1>Envied others on account of their possessions?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The root of all evils is envy."</p><p>Direct: Exodus 20:17; James 3:14-16; Galatians 5:26</p><p>Exodus 20:17: "You shall not covet your neighbor's house. You shall not covet your neighbor's wife, nor his male or female slave, nor his ox or donkey, nor anything else that belongs to him."</p><p>James 3:14-16: "But if you have bitter jealousy and selfish ambition in your hearts, do not boast and be false to the truth... For where jealousy and selfish ambition exist, there is disorder."</p><p>Galatians 5:26: "Let us not become conceited, provoking one another, envying one another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to live in a spirit of Gospel poverty and simplicity?">
+
+<h1>Neglected to live in a spirit of Gospel poverty and simplicity?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Francis of Assisi: "It is in giving that we receive."</p><p>Direct: Matthew 5:3; Matthew 6:19-21; Luke 12:13-21</p><p>Matthew 5:3: "Blessed are the poor in spirit, for theirs is the kingdom of heaven."</p><p>Matthew 6:19-21: "Do not store up for yourselves treasures on earth... But store up treasures in heaven."</p><p>Luke 12:13-21: "Take care to guard against all greed, for though one may be rich, one's life does not consist of possessions."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to give generously to others in need?">
+
+<h1>Neglected to give generously to others in need?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Basil the Great: "The money which you possess belongs to the poor."</p><p>Direct: Matthew 25:31-46; Luke 3:11; 1 John 3:17-18</p><p>Matthew 25:31-46: "Amen, I say to you, whatever you did for one of these least brothers of mine, you did for me... And these will go off to eternal punishment, but the righteous to eternal life."</p><p>Luke 3:11: "He said to them in reply, 'Whoever has two cloaks should share with the person who has none. And whoever has food should do likewise.'"</p><p>1 John 3:17-18: "If someone who has worldly means sees a brother in need and refuses him compassion, how can the love of God remain in him? Children, let us love not in word or speech but in deed and truth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to consider that God has provided me with money so that I might use it to benefit others as well as for my own legitimate needs?">
+
+<h1>Failed to consider that God has provided me with money so that I might use it to benefit others as well as for my own legitimate needs?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The rich exist for the sake of the poor, and the poor for the salvation of the rich."</p><p>Direct: Deuteronomy 8:17-18; Luke 12:42-48; 1 Timothy 6:17-19</p><p>Deuteronomy 8:17-18: "Otherwise, you might say in your heart, 'My own power and the strength of my own hand have gotten me this wealth.' Remember then the LORD, your God, for it is he who gives you the power to get wealth."</p><p>Luke 12:42-48: "Much will be required of the person entrusted with much, and still more will be demanded of the person entrusted with more."</p><p>1 Timothy 6:17-19: "Tell the rich in the present age not to be proud and not to rely on so uncertain a thing as wealth but rather on God... Tell them to do good, to be rich in good works, to be generous, ready to share."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Allowed myself to be conformed to a consumer mentality, buying, throwing away, wasting, and spending excessively?">
+
+<h1>Allowed myself to be conformed to a consumer mentality, buying, throwing away, wasting, and spending excessively?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Paul II, Sollicitudo Rei Socialis 28: excessive possessions can enslave the human person.</p><p>Direct: Luke 12:15-21; Matthew 6:19-21; 1 Timothy 6:6-10</p><p>Luke 12:15-21: "Then he said to the crowd, 'Take care to guard against all greed, for though one may be rich, one's life does not consist of possessions.' ... Thus will it be for the one who stores up treasure for himself but is not rich in what matters to God."</p><p>Matthew 6:19-21: "Do not store up for yourselves treasures on earth, where moth and decay destroy, and thieves break in and steal."</p><p>1 Timothy 6:6-10: "Indeed, religion with contentment is a great gain... For the love of money is the root of all evils."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to practice the corporal works of mercy?">
+
+<h1>Neglected to practice the corporal works of mercy?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Vincent de Paul: "Love is inventive to infinity."</p><p>Direct: Matthew 25:31-46; James 2:14-17; Isaiah 58:6-7</p><p>Matthew 25:31-46: "For I was hungry and you gave me food, I was thirsty and you gave me drink, a stranger and you welcomed me, naked and you clothed me, ill and you cared for me, in prison and you visited me."</p><p>James 2:14-17: "What good is it, my brothers, if someone says he has faith but does not have works? Can that faith save him?"</p><p>Isaiah 58:6-7: "Is this not, rather, the fasting that I choose: releasing those bound unjustly... sharing your bread with the hungry, bringing the afflicted and the homeless into your house?"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Deliberately defaced, destroyed, or lost another person's property?">
+
+<h1>Deliberately defaced, destroyed, or lost another person's property?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.66: justice requires respect for another’s goods.</p><p>Direct: Exodus 20:15; Exodus 22:1-14; Luke 19:8</p><p>Exodus 20:15: "You shall not steal."</p><p>Exodus 22:1-14: "When someone steals an ox or a sheep... he must make full restitution."</p><p>Luke 19:8: "Zacchaeus stood there and said to the Lord, 'Behold, half of my possessions, Lord, I shall give to the poor, and if I have extorted anything from anyone I shall repay it four times over.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Cheated on a test, taxes, sports, games, or in business?">
+
+<h1>Cheated on a test, taxes, sports, games, or in business?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.61: justice gives each person what is due.</p><p>Direct: Leviticus 19:11,35-36; Luke 3:12-14; Romans 13:7</p><p>Leviticus 19:11,35-36: "You shall not steal. You shall not deceive or lie to one another... You shall not act dishonestly in rendering judgment in measures of length, weight, or quantity."</p><p>Luke 3:12-14: "Even tax collectors came to be baptized and they said to him, 'Teacher, what should we do?' He answered them, 'Stop collecting more than what is prescribed.'"</p><p>Romans 13:7: "Pay to all their dues, tax to whom tax is due, toll to whom toll is due, respect to whom respect is due, honor to whom honor is due."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Squandered money through compulsive gambling?">
+
+<h1>Squandered money through compulsive gambling?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The love of money is the root of all evils."</p><p>Direct: 1 Timothy 6:9-10; Luke 12:15; Proverbs 13:11</p><p>1 Timothy 6:9-10: "Those who want to be rich fall into temptation and into a trap... For the love of money is the root of all evils."</p><p>Luke 12:15: "Take care to guard against all greed, for though one may be rich, one's life does not consist of possessions."</p><p>Proverbs 13:11: "Wealth quickly gotten dwindles, but whoso gathers little by little enlarges it."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Made a false claim to an insurance company?">
+
+<h1>Made a false claim to an insurance company?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Augustine, On Lying 3: "A lie consists in speaking a falsehood with the will of deceiving."</p><p>Direct: Exodus 20:16; Leviticus 19:11; Ephesians 4:25</p><p>Exodus 20:16: "You shall not bear false witness against your neighbor."</p><p>Leviticus 19:11: "You shall not steal. You shall not deceive or lie to one another."</p><p>Ephesians 4:25: "Therefore, putting away falsehood, speak the truth, each one to his neighbor, for we are members one of another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to pay employees a just wage or failed to give a full day's work for a full day's pay?">
+
+<h1>Failed to pay employees a just wage or failed to give a full day's work for a full day's pay?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. James the Greater, quoted in Rerum Novarum: withheld wages cry to heaven for justice.</p><p>Direct: Deuteronomy 24:14-15; Matthew 20:1-16; James 5:4</p><p>Deuteronomy 24:14-15: "You shall not defraud a poor and needy hired servant... You shall pay him his wages each day before the sun sets, for he is poor and upon it he sets his heart."</p><p>Matthew 20:1-16: "Take what is yours and go... Am I not free to do as I wish with my own money? Or are you envious because I am generous?"</p><p>James 5:4: "Behold, the wages you withheld from the laborers who harvested your fields are crying aloud, and the cries of the harvesters have reached the ears of the Lord of hosts."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to honor my part of a contract?">
+
+<h1>Failed to honor my part of a contract?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.110: truthfulness is owed in agreements.</p><p>Direct: Matthew 5:37; Psalm 15:4; Romans 13:8</p><p>Matthew 5:37: "Let your 'Yes' mean 'Yes,' and your 'No' mean 'No.' Anything more is from the evil one."</p><p>Psalm 15:4: "...who keeps an oath despite the cost..."</p><p>Romans 13:8: "Owe nothing to anyone, except to love one another; for the one who loves another has fulfilled the law."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to make good on a debt?">
+
+<h1>Failed to make good on a debt?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Ambrose, On Naboth: "The earth was created for all, not only for the rich."</p><p>Direct: Romans 13:8; Psalm 37:21; Matthew 5:25-26</p><p>Romans 13:8: "Owe nothing to anyone, except to love one another; for the one who loves another has fulfilled the law."</p><p>Psalm 37:21: "The wicked borrows and does not repay, but the just man is generous and gives."</p><p>Matthew 5:25-26: "Settle with your opponent quickly while on the way to court with him. Otherwise your opponent will hand you over to the judge..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Overcharged someone, especially to take advantage of another person's hardship or ignorance?">
+
+<h1>Overcharged someone, especially to take advantage of another person's hardship or ignorance?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. John Chrysostom: "The market is not a place for injustice."</p><p>Direct: Leviticus 19:35-36; Proverbs 11:1; Luke 3:12-14</p><p>Leviticus 19:35-36: "You shall not act dishonestly in rendering judgment. In measures of length, weight, or quantity you shall have true scales, true weights."</p><p>Proverbs 11:1: "False scales are an abomination to the LORD, but an accurate weight pleases him."</p><p>Luke 3:12-14: "Stop collecting more than what is prescribed."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Misused natural resources?">
+
+<h1>Misused natural resources?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Seventh & Tenth Commandments</p><p><b>Precept:</b> </p><p>Related: St. Francis of Assisi: "Praised be You, my Lord, through our sister Mother Earth."</p><p>Related: Genesis 1:28; Genesis 2:15; Revelation 11:18</p><p>Genesis 1:28: "God blessed them and God said to them: Be fertile and multiply; fill the earth and subdue it."</p><p>Genesis 2:15: "The LORD God then took the man and settled him in the garden of Eden, to cultivate and care for it."</p><p>Revelation 11:18: "The nations raged, but your wrath has come... and the time for destroying those who destroy the earth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Lied?">
+
+<h1>Lied?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, On Lying 3: "A lie consists in speaking a falsehood with the will of deceiving."</p><p>Direct: Exodus 20:16; Proverbs 12:22; Ephesians 4:25</p><p>Exodus 20:16: "You shall not bear false witness against your neighbor."</p><p>Proverbs 12:22: "Lying lips are an abomination to the LORD, but those who are trustworthy are his delight."</p><p>Ephesians 4:25: "Therefore, putting away falsehood, speak the truth, each one to his neighbor, for we are members one of another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Knowingly and willfully deceived another?">
+
+<h1>Knowingly and willfully deceived another?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.110: truthfulness is a virtue.</p><p>Direct: Leviticus 19:11; John 8:44; Colossians 3:9</p><p>Leviticus 19:11: "You shall not steal. You shall not deceive or lie to one another."</p><p>John 8:44: "You belong to your father the devil and you willingly carry out your father's desires. He was a murderer from the beginning... because there is no truth in him. When he tells a lie, he speaks in character, because he is a liar and the father of lies."</p><p>Colossians 3:9: "Stop lying to one another, since you have taken off the old self with its practices."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Perjured myself under oath?">
+
+<h1>Perjured myself under oath?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, Against Lying 3: a lie is a falsehood spoken with intent to deceive.</p><p>Direct: Exodus 20:7; Matthew 5:33-37; James 5:12</p><p>Exodus 20:7: "You shall not take the name of the LORD, your God, in vain. For the LORD will not leave unpunished anyone who takes his name in vain."</p><p>Matthew 5:33-37: "Again you have heard that it was said to your ancestors, 'Do not take a false oath, but make good to the Lord all that you vow.' But I say to you, do not swear at all... Let your 'Yes' mean 'Yes,' and your 'No' mean 'No.'"</p><p>James 5:12: "But above all, my brothers, do not swear, either by heaven or by earth or with any other oath, but let your 'Yes' mean 'Yes' and your 'No' mean 'No,' that you may not incur condemnation."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Gossiped?">
+
+<h1>Gossiped?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.27: "Detraction is a kind of murder."</p><p>Direct: Proverbs 16:28; Proverbs 18:8; James 3:5-6</p><p>Proverbs 16:28: "An intriguing person stirs up strife, and a slanderer separates close friends."</p><p>Proverbs 18:8: "The words of a slanderer are like dainty morsels that go down into one's inmost being."</p><p>James 3:5-6: "So also the tongue is a small member and yet has great pretensions. See how small a fire sets huge forests ablaze! The tongue is also a fire..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed detraction by destroying a person's reputation by telling others about the person's faults for no good reason?">
+
+<h1>Committed detraction by destroying a person's reputation by telling others about the person's faults for no good reason?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.27: "Detraction is a kind of murder."</p><p>Direct: Leviticus 19:16; Matthew 18:15; James 4:11</p><p>Leviticus 19:16: "You shall not go about spreading slander among your people; nor shall you stand by idly when your neighbor's life is at stake. I am the LORD."</p><p>Matthew 18:15: "If your brother sins against you, go and tell him his fault between you and him alone. If he listens to you, you have won your brother."</p><p>James 4:11: "Do not speak evil of one another, brothers. Whoever speaks evil of a brother or judges his brother speaks evil of the law and judges the law."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed slander or calumny by telling lies about another person in order to destroy the person's reputation?">
+
+<h1>Committed slander or calumny by telling lies about another person in order to destroy the person's reputation?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, On Lying 3: deliberate falsehood harms both speaker and hearer.</p><p>Direct: Exodus 20:16; Proverbs 19:5; Ephesians 4:25</p><p>Exodus 20:16: "You shall not bear false witness against your neighbor."</p><p>Proverbs 19:5: "The false witness will not go unpunished, and the one who utters lies will not escape."</p><p>Ephesians 4:25: "Therefore, putting away falsehood, speak the truth, each one to his neighbor, for we are members one of another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Committed libel by writing lies about another person in order to destroy the person's reputation?">
+
+<h1>Committed libel by writing lies about another person in order to destroy the person's reputation?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Thomas Aquinas, Summa Theologiae II-II, q.73: detraction harms a neighbor’s reputation.</p><p>Direct: Exodus 20:16; Proverbs 12:18; James 3:5-6</p><p>Exodus 20:16: "You shall not bear false witness against your neighbor."</p><p>Proverbs 12:18: "The babble of some acts like sword thrusts, but the tongue of the wise brings healing."</p><p>James 3:5-6: "So also the tongue is a small member and yet has great pretensions... The tongue is also a fire."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been guilty of rash judgment by assuming the worst of another person based on circumstantial evidence?">
+
+<h1>Been guilty of rash judgment by assuming the worst of another person based on circumstantial evidence?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Dorotheus of Gaza: "Do not judge him; you do not know the judgments of God."</p><p>Direct: Matthew 7:1-5; John 7:24; James 4:11-12</p><p>Matthew 7:1-5: "Stop judging, that you may not be judged. For as you judge, so will you be judged, and the measure with which you measure will be measured out to you... Remove the wooden beam from your eye first; then you will see clearly to remove the splinter from your brother's eye."</p><p>John 7:24: "Stop judging by appearances, but judge justly."</p><p>James 4:11-12: "There is one lawgiver and judge who is able to save or to destroy. Who then are you to judge your neighbor?"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to make reparation for a lie I told or for harm done to a person's reputation?">
+
+<h1>Failed to make reparation for a lie I told or for harm done to a person's reputation?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Augustine, On Lying 21: truth and justice require correction of the harm caused.</p><p>Direct: Luke 19:8; Matthew 5:23-24; Ephesians 4:25</p><p>Luke 19:8: "Zacchaeus stood there and said to the Lord, 'Behold, half of my possessions, Lord, I shall give to the poor, and if I have extorted anything from anyone I shall repay it four times over.'"</p><p>Matthew 5:23-24: "Therefore, if you bring your gift to the altar, and there recall that your brother has anything against you, leave your gift there at the altar, go first and be reconciled with your brother, and then come and offer your gift."</p><p>Ephesians 4:25: "Therefore, putting away falsehood, speak the truth, each one to his neighbor, for we are members one of another."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to speak out in defense of the Catholic Faith, the Church, or another person?">
+
+<h1>Failed to speak out in defense of the Catholic Faith, the Church, or another person?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Catherine of Siena: "Proclaim the truth and do not be silent through fear."</p><p>Direct: Matthew 10:32-33; Acts 4:19-20; Proverbs 31:8-9</p><p>Matthew 10:32-33: "Everyone who acknowledges me before others I will acknowledge before my heavenly Father. But whoever denies me before others, I will deny before my heavenly Father."</p><p>Acts 4:19-20: "Peter and John, however, said to them in reply, 'Whether it is right in the sight of God for us to obey you rather than God, you be the judges. It is impossible for us not to speak about what we have seen and heard.'"</p><p>Proverbs 31:8-9: "Open your mouth in behalf of the mute, and for the rights of the destitute; Open your mouth, judge justly, defend the needy and the poor!"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Betrayed another person's confidence through speech, deed, or writing?">
+
+<h1>Betrayed another person's confidence through speech, deed, or writing?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> Eighth Commandment</p><p><b>Precept:</b> </p><p>Related: St. Ambrose, Duties of the Clergy: "Keep the confidence entrusted to you."</p><p>Direct: Proverbs 11:13; Proverbs 25:9-10; Sirach 27:16-21</p><p>Proverbs 11:13: "A gossip goes about revealing secrets, but the trustworthy person keeps a confidence."</p><p>Proverbs 25:9-10: "Argue your case with your neighbor, but do not reveal another's secret, Lest he who hears hear you to your shame, and your ill repute never cease."</p><p>Sirach 27:16-21: "Whoever reveals secrets destroys trust and will never find a congenial friend. Love your friend and keep faith with him..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Made a good Confession of my mortal sins at least once a year?">
+
+<h1>Made a good Confession of my mortal sins at least once a year?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Second Precept: Confess your sins to a Priest at least once a year</p><p>Related: St. John Vianney: "The Lord is more anxious to forgive our sins than a woman to carry her baby out of the womb."</p><p>Direct: John 20:22-23; James 5:16; 1 John 1:9</p><p>John 20:22-23: "And when he had said this, he breathed on them and said to them, 'Receive the Holy Spirit. Whose sins you forgive are forgiven them, and whose sins you retain are retained.'"</p><p>James 5:16: "Therefore, confess your sins to one another and pray for one another, that you may be healed."</p><p>1 John 1:9: "If we acknowledge our sins, he is faithful and just and will forgive our sins and cleanse us from every wrongdoing."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Purposely omitted telling my mortal sins in my last Confession?">
+
+<h1>Purposely omitted telling my mortal sins in my last Confession?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Second Precept: Confess your sins to a Priest at least once a year</p><p>Related: St. Augustine, Sermon 352: "Do not be ashamed to confess your sins."</p><p>Direct: John 20:22-23; James 5:16; 1 John 1:9</p><p>John 20:22-23: "Receive the Holy Spirit. Whose sins you forgive are forgiven them, and whose sins you retain are retained."</p><p>James 5:16: "Confess your sins to one another and pray for one another, that you may be healed."</p><p>1 John 1:9: "If we acknowledge our sins, he is faithful and just and will forgive our sins and cleanse us from every wrongdoing."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to perform the penance I was given?">
+
+<h1>Neglected to perform the penance I was given?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Second Precept: Confess your sins to a Priest at least once a year</p><p>Related: St. John Vianney: "The penance we receive is a small satisfaction for the offenses we have committed."</p><p>Related: Luke 3:8; Acts 26:20; 2 Corinthians 7:10</p><p>Luke 3:8: "Produce good fruits as evidence of your repentance..."</p><p>Acts 26:20: "I preached that they should repent and turn to God, doing works giving evidence of repentance."</p><p>2 Corinthians 7:10: "For godly sorrow produces a salutary repentance without regret, whereas worldly sorrow produces death."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to make reparation for any harm I have done to others?">
+
+<h1>Neglected to make reparation for any harm I have done to others?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Second Precept: Confess your sins to a Priest at least once a year</p><p>Related: St. Augustine: "The confession of evil works is the first beginning of good works."</p><p>Direct: Luke 19:8; Matthew 5:23-24; Numbers 5:6-7</p><p>Luke 19:8: "Zacchaeus stood there and said to the Lord, 'Behold, half of my possessions, Lord, I shall give to the poor, and if I have extorted anything from anyone I shall repay it four times over.'"</p><p>Matthew 5:23-24: "Therefore, if you bring your gift to the altar, and there recall that your brother has anything against you, leave your gift there at the altar, go first and be reconciled with your brother..."</p><p>Numbers 5:6-7: "When a man or a woman commits any of the sins against another... that person shall confess the sin that has been committed, make full restitution for the wrong, and add one fifth to it..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to fulfill my Easter duty to receive Holy Communion at least once between the First Sunday of Lent and Trinity Sunday?">
+
+<h1>Neglected to fulfill my Easter duty to receive Holy Communion at least once between the First Sunday of Lent and Trinity Sunday?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Third Precept: Receive Holy Communion at least once during the Easter season</p><p>Related: St. Justin Martyr, First Apology 67: Christians gather for the Eucharist on Sunday.</p><p>Direct: John 6:53-56; Acts 20:7; 1 Corinthians 11:23-26</p><p>John 6:53-56: "Jesus said to them, 'Amen, amen, I say to you, unless you eat the flesh of the Son of Man and drink his blood, you do not have life within you. Whoever eats my flesh and drinks my blood has eternal life...'"</p><p>Acts 20:7: "On the first day of the week when we gathered to break bread, Paul spoke to them..."</p><p>1 Corinthians 11:23-26: "For I received from the Lord what I also handed on to you, that the Lord Jesus, on the night he was handed over, took bread..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Received Holy Communion while in the state of mortal sin?">
+
+<h1>Received Holy Communion while in the state of mortal sin?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Third Precept: Receive Holy Communion at least once during the Easter season</p><p>Related: St. Thomas Aquinas, Summa Theologiae III, q.80: the Eucharist must be received worthily.</p><p>Direct: 1 Corinthians 11:27-29; Matthew 5:23-24</p><p>1 Corinthians 11:27-29: "Therefore whoever eats the bread or drinks the cup of the Lord unworthily will have to answer for the body and blood of the Lord. A person should examine himself, and so eat the bread and drink the cup. For anyone who eats and drinks without discerning the body, eats and drinks judgment on himself."</p><p>Matthew 5:23-24: "Leave your gift there at the altar, go first and be reconciled with your brother, and then come and offer your gift."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to fast for at least one hour before receiving Holy Communion?">
+
+<h1>Failed to fast for at least one hour before receiving Holy Communion?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Third Precept: Receive Holy Communion at least once during the Easter season</p><p>Related: St. Cyril of Jerusalem, Mystagogical Catechesis V: approach the Eucharist with reverence.</p><p>Related: 1 Corinthians 11:27-29; John 6:53-56</p><p>1 Corinthians 11:27-29: "A person should examine himself, and so eat the bread and drink the cup. For anyone who eats and drinks without discerning the body, eats and drinks judgment on himself."</p><p>John 6:53-56: "Amen, amen, I say to you, unless you eat the flesh of the Son of Man and drink his blood, you do not have life within you."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Received Holy Communion more than twice in one day?">
+
+<h1>Received Holy Communion more than twice in one day?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Third Precept: Receive Holy Communion at least once during the Easter season</p><p>Related: St. Justin Martyr, First Apology 67: the Eucharist is received in the Christian assembly.</p><p>Related: Acts 20:7; 1 Corinthians 11:23-26</p><p>Acts 20:7: "On the first day of the week when we gathered to break bread, Paul spoke to them..."</p><p>1 Corinthians 11:23-26: "For as often as you eat this bread and drink the cup, you proclaim the death of the Lord until he comes."</p><p></p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to do penance every Friday of the year if not abstaining from meat?">
+
+<h1>Neglected to do penance every Friday of the year if not abstaining from meat?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. Basil the Great: "Fasting is the beginning of virtue."</p><p>Related: Matthew 9:15; Isaiah 58:6-7; 1 Corinthians 9:27</p><p>Matthew 9:15: "Jesus answered them, 'Can the wedding guests mourn as long as the bridegroom is with them? The days will come when the bridegroom is taken away from them, and then they will fast.'"</p><p>Isaiah 58:6-7: "Is this not, rather, the fasting that I choose: releasing those bound unjustly, untying the thongs of the yoke; Setting free the oppressed, breaking off every yoke? Is it not sharing your bread with the hungry..."</p><p>1 Corinthians 9:27: "No, I drive my body and train it, for fear that, after having preached to others, I myself should be disqualified."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to abstain from meat on Ash Wednesday and the Fridays of Lent if I am 14 years of age or older?">
+
+<h1>Neglected to abstain from meat on Ash Wednesday and the Fridays of Lent if I am 14 years of age or older?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. Augustine, Sermon 207: fasting should be joined to prayer and almsgiving.</p><p>Related: Joel 2:12-13; Matthew 6:16-18; Matthew 9:15</p><p>Joel 2:12-13: "Yet even now—oracle of the LORD—return to me with your whole heart, with fasting, weeping, and mourning; rend your hearts, not your garments, and return to the LORD, your God."</p><p>Matthew 6:16-18: "When you fast, do not look gloomy like the hypocrites. They neglect their appearance, so that they may appear to others to be fasting... But when you fast, anoint your head and wash your face..."</p><p>Matthew 9:15: "Jesus answered them, 'Can the wedding guests mourn as long as the bridegroom is with them? The days will come when the bridegroom is taken away from them, and then they will fast.'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to fast on Ash Wednesday and Good Friday if I am between the ages of 18 and 59?">
+
+<h1>Neglected to fast on Ash Wednesday and Good Friday if I am between the ages of 18 and 59?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. John Chrysostom: "Fasting is the support of our souls."</p><p>Direct: Matthew 6:16-18; Joel 2:12-13; Acts 13:2-3</p><p>Matthew 6:16-18: "When you fast, do not look gloomy like the hypocrites... But when you fast, anoint your head and wash your face, so that you may not appear to be fasting, except to your Father who is hidden."</p><p>Joel 2:12-13: "Return to me with your whole heart, with fasting, weeping, and mourning; rend your hearts, not your garments..."</p><p>Acts 13:2-3: "While they were worshiping the Lord and fasting, the Holy Spirit said, 'Set apart for me Barnabas and Saul for the work to which I have called them.' Then, completing their fasting and prayer, they laid hands on them..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Participated in diversions on days of penance, such as crawfish boils, fish fries, ballgames, movies, or shopping on Ash Wednesday or Good Friday?">
+
+<h1>Participated in diversions on days of penance, such as crawfish boils, fish fries, ballgames, movies, or shopping on Ash Wednesday or Good Friday?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. John Chrysostom: "If you cannot fast, at least avoid sin."</p><p>Related: Isaiah 58:3-7; Matthew 6:16-18; 1 Peter 4:2-3</p><p>Isaiah 58:3-7: "Why do we fast, and you do not see it? afflict ourselves, and you take no note of it? Lo, on your fast day you carry out your own pursuits, and drive all your laborers..."</p><p>Matthew 6:16-18: "When you fast, do not look gloomy like the hypocrites... So that you may not appear to be fasting, except to your Father who is hidden."</p><p>1 Peter 4:2-3: "...so as to live the remainder of one's earthly life no longer by human desires, but by the will of God. For the time that has passed is sufficient to have done what the Gentiles like to do..."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to spend time in prayer, perform spiritual and corporal works of mercy, and practice self-denial?">
+
+<h1>Neglected to spend time in prayer, perform spiritual and corporal works of mercy, and practice self-denial?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fourth Precept: Observe the prescribed days of fasting and abstinence</p><p>Related: St. Peter Chrysologus: "Fasting is the soul of prayer."</p><p>Direct: Isaiah 58:6-7; Matthew 6:1-18; Matthew 25:31-46</p><p>Isaiah 58:6-7: "Is this not, rather, the fasting that I choose: releasing those bound unjustly... sharing your bread with the hungry, bringing the afflicted and the homeless into your house?"</p><p>Matthew 6:1-18: "Take care not to perform righteous deeds in order that people may see them... But when you give alms... when you pray... when you fast..."</p><p>Matthew 25:31-46: "For I was hungry and you gave me food, I was thirsty and you gave me drink... Amen, I say to you, whatever you did for one of these least brothers of mine, you did for me."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to contribute a just amount of my time, talents, and money to support my parish and the work of the Church?">
+
+<h1>Neglected to contribute a just amount of my time, talents, and money to support my parish and the work of the Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fifth Precept: Contribute to the support of the Church</p><p>Related: St. Paul, quoted by St. John Chrysostom: "It is more blessed to give than to receive."</p><p>Direct: 1 Corinthians 9:13-14; 2 Corinthians 9:6-8; Galatians 6:6</p><p>1 Corinthians 9:13-14: "Do you not know that those who perform the temple services eat what belongs to the temple, and those who minister at the altar share in the sacrificial offerings? In the same way, the Lord ordered that those who preach the gospel should live by the gospel."</p><p>2 Corinthians 9:6-8: "Consider this: whoever sows sparingly will also reap sparingly, and whoever sows bountifully will also reap bountifully. Each must do as already determined, without sadness or compulsion, for God loves a cheerful giver."</p><p>Galatians 6:6: "One who is being instructed in the word should share all good things with his instructor."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Neglected to support the Church by not trying to become a saint or striving to make sincere progress each day in sanctity?">
+
+<h1>Neglected to support the Church by not trying to become a saint or striving to make sincere progress each day in sanctity?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Fifth Precept: Contribute to the support of the Church</p><p>Related: St. Thérèse of Lisieux: "Miss no single opportunity of making some small sacrifice."</p><p>Direct: Matthew 5:48; 1 Thessalonians 4:3; Philippians 2:12-13</p><p>Matthew 5:48: "So be perfect, just as your heavenly Father is perfect."</p><p>1 Thessalonians 4:3: "This is the will of God, your holiness: that you refrain from immorality."</p><p>Philippians 2:12-13: "Work out your salvation with fear and trembling. For God is the one who, for his good purpose, works in you both to desire and to work."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Been living in an invalid or illicit marriage according to the laws of the Catholic Church?">
+
+<h1>Been living in an invalid or illicit marriage according to the laws of the Catholic Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. John Paul II, Familiaris Consortio 11: marriage is a covenant between baptized persons.</p><p>Direct: Matthew 19:4-6; Mark 10:6-9; Ephesians 5:31-33</p><p>Matthew 19:4-6: "He said in reply, 'Have you not read that from the beginning the Creator made them male and female and said, 'For this reason a man shall leave his father and mother and be joined to his wife, and the two shall become one flesh'? So they are no longer two, but one flesh.'"</p><p>Mark 10:6-9: "From the beginning of creation, God made them male and female. For this reason a man shall leave his father and mother and be joined to his wife... What therefore God has joined together, no human being must separate."</p><p>Ephesians 5:31-33: "For this reason a man shall leave his father and his mother and be joined to his wife, and the two shall become one flesh... In any case, each one of you should love his wife as himself, and the wife should respect her husband."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Abandoned my spouse or family through separation or divorce?">
+
+<h1>Abandoned my spouse or family through separation or divorce?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. John Paul II, Familiaris Consortio 83: the abandoned spouse needs special pastoral care and fidelity.</p><p>Direct: Malachi 2:14-16; Matthew 19:6; 1 Corinthians 7:10-11</p><p>Malachi 2:14-16: "...Because the LORD is witness between you and the wife of your youth, with whom you have broken faith, though she is your companion and your covenanted wife... For I hate divorce, says the LORD, the God of Israel."</p><p>Matthew 19:6: "So they are no longer two, but one flesh. Therefore what God has joined together, no human being must separate."</p><p>1 Corinthians 7:10-11: "To the married, however, I give this instruction (not I, but the Lord): a wife should not separate from her husband—and if she does separate she must remain unmarried or else be reconciled to her husband—and a husband should not divorce his wife."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Kept company with someone whom I cannot marry in the Catholic Church?">
+
+<h1>Kept company with someone whom I cannot marry in the Catholic Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. Francis de Sales, Introduction to the Devout Life III.13: avoid occasions that lead to sin.</p><p>Related: 1 Corinthians 15:33; 2 Corinthians 6:14-18; 1 Thessalonians 5:22</p><p>1 Corinthians 15:33: "Do not be led astray: 'Bad company corrupts good morals.'"</p><p>2 Corinthians 6:14-18: "Do not be yoked with those who are different, with unbelievers. For what partnership do righteousness and lawlessness have? Or what fellowship does light have with darkness?"</p><p>1 Thessalonians 5:22: "Refrain from every kind of evil."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Given scandal by living with a member of the opposite sex without the benefit of a marriage blessed by the Catholic Church?">
+
+<h1>Given scandal by living with a member of the opposite sex without the benefit of a marriage blessed by the Catholic Church?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. John Paul II, Familiaris Consortio 81: irregular situations can cause scandal and harm family life.</p><p>Direct: Matthew 18:6-7; 1 Corinthians 6:18; Hebrews 13:4</p><p>Matthew 18:6-7: "Whoever causes one of these little ones who believe in me to sin, it would be better for him to have a great millstone hung around his neck and to be drowned in the depths of the sea. Woe to the world because of things that cause sin!"</p><p>1 Corinthians 6:18: "Avoid immorality. Every other sin a person commits is outside the body, but the immoral person sins against his own body."</p><p>Hebrews 13:4: "Let marriage be honored among all and the marriage bed be kept undefiled, for God will judge the immoral and adulterers."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Entered into marriage with more than one person at the same time?">
+
+<h1>Entered into marriage with more than one person at the same time?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. Augustine, De Bono Coniugali 7: marriage is ordered toward fidelity and permanence.</p><p>Direct: Matthew 19:4-6; 1 Corinthians 7:10-11; Romans 7:2-3</p><p>Matthew 19:4-6: "Have you not read that from the beginning the Creator made them male and female... Therefore what God has joined together, no human being must separate."</p><p>1 Corinthians 7:10-11: "To the married, however, I give this instruction: a wife should not separate from her husband... and a husband should not divorce his wife."</p><p>Romans 7:2-3: "Thus, a married woman is bound by law to her living husband; but if her husband dies, she is released from the law in respect to her husband. Consequently, she will be called an adulteress if, while her husband is alive, she associates with another man."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Failed to embrace the Catholic teaching that marriage can only exist between one man and one woman?">
+
+<h1>Failed to embrace the Catholic teaching that marriage can only exist between one man and one woman?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. John Paul II, Familiaris Consortio 11: marriage is the intimate union of life and love between man and woman.</p><p>Direct: Genesis 1:27-28; Genesis 2:24; Matthew 19:4-6</p><p>Genesis 1:27-28: "God created mankind in his image; in the image of God he created them; male and female he created them. God blessed them and God said to them: Be fertile and multiply..."</p><p>Genesis 2:24: "That is why a man leaves his father and mother and clings to his wife, and the two of them become one body."</p><p>Matthew 19:4-6: "He said in reply, 'Have you not read that from the beginning the Creator made them male and female...'"</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Supported politicians who favor same-sex unions?">
+
+<h1>Supported politicians who favor same-sex unions?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. Thomas More: "I die the King’s good servant—and God’s first."</p><p>Related: Acts 5:29; Proverbs 31:8-9; Micah 6:8</p><p>Acts 5:29: "But Peter and the apostles said in reply, 'We must obey God rather than men.'"</p><p>Proverbs 31:8-9: "Open your mouth in behalf of the mute, and for the rights of the destitute; Open your mouth, judge justly, defend the needy and the poor!"</p><p>Micah 6:8: "You have been told, O mortal, what is good, and what the LORD requires of you: Only to do justice and to love goodness, and to walk humbly with your God."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+<div class="question" data-question="Publicly proclaimed that the Church's teaching on marriage is wrong and thereby taught others to reject it?">
+
+<h1>Publicly proclaimed that the Church's teaching on marriage is wrong and thereby taught others to reject it?</h1>
+
+<label>
+<input type="checkbox" class="confess">
+Need to Confess
+</label>
+
+<br><br>
+
+<label>
+<input type="checkbox" class="watchlist">
+Watchlist
+</label>
+<p><b>Commandment:</b> </p><p><b>Precept:</b> Additional Precept: Observe the laws of the Church concerning marriage</p><p>Related: St. Catherine of Siena: "Proclaim the truth and do not be silent through fear."</p><p>Related: Matthew 10:32-33; Acts 4:19-20; 1 Timothy 3:15</p><p>Matthew 10:32-33: "Everyone who acknowledges me before others I will acknowledge before my heavenly Father. But whoever denies me before others, I will deny before my heavenly Father."</p><p>Acts 4:19-20: "Peter and John, however, said to them in reply, 'Whether it is right in the sight of God for us to obey you rather than God, you be the judges. It is impossible for us not to speak about what we have seen and heard.'"</p><p>1 Timothy 3:15: "...you should know how to behave in the household of God, which is the church of the living God, the pillar and foundation of truth."</p><p></p>
+<h3>Notes</h3>
+
+<textarea></textarea>
+
+</div>
+</body></html>
+
