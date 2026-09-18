@@ -1,7 +1,7 @@
 {
   "name": "Examination of Conscience",
   "short_name": "Confession",
-  "start_url": "./ConfessionWebApp4.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
