@@ -8,7 +8,7 @@ self.addEventListener("install", event => {
 
             return cache.addAll([
                 "./",
-                "./ConfessionWebApp4.html",
+                "./index.html",
                 "./manifest.json"
             ]);
 
